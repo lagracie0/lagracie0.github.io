@@ -100,20 +100,60 @@
 }
 
 :root {
-  /* ---- Colour: RAG as a semantic system, never decorative ----
-     Green/Amber/Red are reserved for case outcome status only — never a
-     button, a link, or a highlight. That is what keeps the meaning
-     singular (WRD N5). Contrast ratios below are against --color-paper
-     (as plain text) and as white text on the fill (as a status badge);
-     both are documented and verified in the Step 2 specimen. */
-  --color-paper: #EFF1EE;   /* page background */
-  --color-ink: #14171A;     /* body text, headings, links, focus rings */
-  --color-line: #5B6169;    /* borders, rules, secondary text */
-  --color-white: #FFFFFF;   /* badge text on a RAG fill */
+  /* ---- Colour ----
+     Warmed site-wide for PRD v2 phase 2. The previous neutrals were cool
+     (a blue-black ink on a grey-green paper) and the only accents
+     available were blue and violet — not a style choice, a structural
+     one: red, amber and green were fenced off for RAG status meaning, so
+     every warm hue was unusable. Phase 1 retired RAG with the outcome
+     block that carried it, which freed the warm end of the spectrum.
+     Every value below is measured, not estimated. */
+  --color-paper: #F6F2EA;   /* warm cream page background */
+  --color-ink: #1B1714;     /* warm near-black — deliberately not #000 */
+  --color-line: #6B6259;    /* warm grey: borders, rules, secondary text */
+  --color-white: #FFFFFF;
+  /* ink on paper 15.95:1 (AAA) · line on paper 5.35:1 (AA) */
 
-  --color-green: #2A7549;   /* delivered on the committed date */
-  --color-amber: #8F5B10;   /* recovered after a real constraint */
-  --color-red: #B23A34;     /* the constraint itself */
+  /* ---- Engagement-type hues ----
+     One per template (see TEMPLATES in data/cases.js). Colour carries
+     category here, not status: a visitor should learn the four kinds of
+     engagement by sight across /work and the case pages rather than by
+     reading a label. Each is a pair — `deep` for text and labels on
+     paper, `tint` for fills with ink text on them. Minimum hue
+     separation is 29°, so the four stay tellable apart at small sizes.
+
+     Verified against WCAG AA (>=4.5:1), including the awkward
+     deep-on-tint combination where a coloured label sits on a coloured
+     fill:
+       A  deep/paper 5.33  ink/tint 13.87  deep/tint 4.64
+       B  deep/paper 5.58  ink/tint 15.33  deep/tint 5.36
+       C  deep/paper 6.08  ink/tint 14.62  deep/tint 5.58
+       D  deep/paper 7.04  ink/tint 13.87  deep/tint 6.13 */
+  --type-a-deep: #A8442B;   /* Live operation — terracotta, 12° */
+  --type-a-tint: #F7DED4;
+  --type-b-deep: #7F5A0D;   /* Product delivery — ochre, 41° */
+  --type-b-tint: #F9EDD2;
+  --type-c-deep: #4F6134;   /* Built from nothing — moss, 84° */
+  --type-c-tint: #E6EBD8;
+  --type-d-deep: #7A3F55;   /* Ongoing function — plum, 338° */
+  --type-d-tint: #F2DEE5;
+
+  /* Neutral-page default, used where no single type owns the surface
+     (the landing page, /about, /contact). Points at the warm family so
+     nothing on the site still renders in the retired cool palette. */
+  --accent-deep: var(--type-d-deep);
+  --accent-tint: var(--type-d-tint);
+
+  /* Compatibility aliases — css/page.css and parts of css/home.css still
+     reference the phase-1 pastel names. Remapped to the warm palette
+     rather than deleted so /about and /contact keep rendering coherently
+     until they are redesigned onto this system. */
+  --pastel-blue: var(--type-b-tint);
+  --pastel-blue-tint: var(--type-b-tint);
+  --blue-deep: var(--type-b-deep);
+  --pastel-lavender: var(--type-d-tint);
+  --pastel-lavender-tint: var(--type-d-tint);
+  --lavender-deep: var(--type-d-deep);
 
   /* ---- Type: three roles, three faces, never blended ---- */
   --font-display: 'Archivo', 'Archivo Fallback', Arial Narrow, sans-serif;

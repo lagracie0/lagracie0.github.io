@@ -95,16 +95,20 @@ function findAdjacent(caseObj, direction) {
   return null;
 }
 
+function sectionId(heading) {
+  return heading.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
 function renderSections(caseObj) {
   return caseObj.sections
     .map((section) => {
       const paragraphs = section.body
-        .map((p) => `      <p>${escapeHtml(p)}</p>`)
+        .map((p) => `        <p>${escapeHtml(p)}</p>`)
         .join('\n');
-      return `    <section class="case-block">
-      <h2>${escapeHtml(section.heading)}</h2>
+      return `      <section class="case-block" id="${sectionId(section.heading)}">
+        <h2>${escapeHtml(section.heading)}</h2>
 ${paragraphs}
-    </section>`;
+      </section>`;
     })
     .join('\n\n');
 }
@@ -182,18 +186,34 @@ ${JSON.stringify(jsonLd, null, 2)}
 
 <main id="main">
   <header class="case-header">
-    <p class="case-type">${escapeHtml(template.label)}</p>
-    <h1>${escapeHtml(caseObj.title)}</h1>
-    <p class="entity-line">${byline}</p>
-${contextLine ? `    <p class="case-context">${escapeHtml(contextLine)}</p>\n` : ''}  </header>
+    <div class="case-header-inner">
+      <p class="case-type">${escapeHtml(template.label)}</p>
+      <h1>${escapeHtml(caseObj.title)}</h1>
+      <p class="entity-line">${byline}</p>
+${contextLine ? `      <p class="case-context">${escapeHtml(contextLine)}</p>\n` : ''}    </div>
+  </header>
 
-  <div class="case-body">
+  <div class="case-layout">
+    <aside class="case-aside">
+      <nav class="case-toc" aria-label="Sections in this case">
+        <p class="case-aside-label">In this case</p>
+        <ol>
+          ${caseObj.sections.map((sec, i) => `<li><a href="#${sectionId(sec.heading)}"><span class="toc-num">${String(i + 1).padStart(2, '0')}</span>${escapeHtml(sec.heading)}</a></li>`).join('\n          ')}
+        </ol>
+      </nav>
+      <div class="case-aside-meta">
+        <p class="case-aside-label">Field</p>
+        <p class="case-aside-value">${escapeHtml(domain)}</p>
+        <p class="case-aside-label">Brought to it</p>
+        <ul class="case-aside-tags">
+          ${capNames.map((c) => `<li>${escapeHtml(c)}</li>`).join('\n          ')}
+        </ul>
+      </div>
+    </aside>
+
+    <div class="case-body">
 ${renderSections(caseObj)}
-
-    <p class="case-meta-tags">
-      <span class="case-meta-label">${escapeHtml(domain)}</span>
-      ${capNames.map((c) => `<span class="case-meta-tag">${escapeHtml(c)}</span>`).join('\n      ')}
-    </p>
+    </div>
   </div>
 
   <nav class="case-nav" aria-label="Other cases">

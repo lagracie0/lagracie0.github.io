@@ -127,25 +127,11 @@ button:focus-visible {
   box-shadow: var(--shadow-focus);
 }
 
-/* ================= Landing page: pastel palette ================= */
-/* Extends, never replaces, the locked tokens in tokens.css (paper/ink/
-   line/RAG stay exactly as they are — RAG in particular stays reserved
-   for case outcome status only, never decorative, so these hues were
-   chosen and verified to sit well clear of red/amber/green's positions
-   on the wheel). Two families, each a soft "fill" for backgrounds and a
-   deeper "readable" shade for links/labels/small text — a pastel fill is
-   too light to pass contrast as text color itself, so every colored
-   surface below uses ink for its body text and one of the *-deep tokens
-   only for mono labels/links. Verified: ink-on-fill ≥12:1 (AAA), both
-   *-deep tokens ≥5.8:1 against paper and white (AA, most of it AAA). */
-:root {
-  --pastel-blue: #C7D9F2;
-  --pastel-blue-tint: #E4EDF9;
-  --blue-deep: #3A5BA0;
-  --pastel-lavender: #DCD0EE;
-  --pastel-lavender-tint: #EFE8F7;
-  --lavender-deep: #5C4A87;
-}
+/* Colour tokens live in css/tokens.css now — the phase-1 pastel block
+   that used to sit here was removed when the palette was warmed
+   site-wide, so there is exactly one place colour is defined. The
+   --pastel-*/-deep names it introduced survive there as aliases onto the
+   warm palette, for the pages not yet redesigned onto the type hues. */
 
 /* ---- Hero ---- */
 

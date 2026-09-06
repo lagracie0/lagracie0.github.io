@@ -1,103 +1,125 @@
-/* Case page layout. Shares css/tokens.css, the header/footer patterns and
-   the pastel accent tokens from css/home.css (linked separately by the
-   generated page).
+/* Case page layout — PRD v2 phase 2.
 
-   PRD v2 §7: this is the page a visitor actually reads, so it gets a real
-   reading layout — generous measure, clear hierarchy, serif at a
-   comfortable size — rather than the dense grid treatment v1 used.
+   Three problems this rewrite fixes:
+   1. Prose was pinned to a narrow left column with the right half of a
+      laptop screen empty. Now: a type-coloured header band across the
+      full width, then a two-column layout (side column + prose) that is
+      centred as a group, so the width is used deliberately at 1100px+
+      and collapses to one column below that.
+   2. The title consumed most of the first screen. It is now on its own
+      smaller clamp, so type, title, byline and the opening paragraph
+      are visible together.
+   3. Mono uppercase section headings were the control-panel vocabulary
+      the PRD retires. Headings are Archivo at a modest size now —
+      display face rather than an editorial serif, deliberately, so this
+      stays distinct from the cream-and-serif look the brief rejected.
 
-   Gone with the v1 six-block schema, because the generator no longer
-   emits any of them: RAG outcome badges (colour now keys to engagement
-   type, not status), .needs-input and .draft-banner (a case is written or
-   it isn't listed — nothing provisional renders publicly any more),
-   .metric, .outcome-item, .artifact-list and .plain-list. */
+   Colour carries engagement type, not status. Each template gets its own
+   hue (tokens in css/tokens.css) applied as a substantial tint band
+   behind the header rather than as small coloured type, so the category
+   is learned by sight. body[data-template] is what keys it. */
+
+/* ---- Header band: the page's main colour surface ---- */
 
 .case-header {
-  padding: var(--space-7) var(--space-5) var(--space-6);
+  background: var(--type-d-tint);
   border-bottom: var(--border-width) solid var(--border-color);
+  padding: var(--space-7) var(--space-5);
 }
 
-/* Engagement type, not domain — PRD v2 groups and colours by the kind of
-   work an engagement was. The per-type hue keys off body[data-template]
-   and lands in phase 2; this is the shared shape it will use. */
-.case-header .case-type {
+body[data-template="A"] .case-header { background: var(--type-a-tint); }
+body[data-template="B"] .case-header { background: var(--type-b-tint); }
+body[data-template="C"] .case-header { background: var(--type-c-tint); }
+body[data-template="D"] .case-header { background: var(--type-d-tint); }
+
+.case-header-inner {
+  max-width: 62rem;
+  margin: 0 auto;
+}
+
+.case-type {
   font-family: var(--font-mono);
   font-size: var(--text-mono-label);
-  /* Explicit, not "normal": an inline-block mono element with its own
-     border-bottom otherwise takes its height from the active font's
-     line-height, which differs by ~2px between JetBrains Mono and its
-     fallback even with size-adjust calibrated. Same fix as
-     .credentials .credential in home.css. */
+  /* Explicit, not "normal" — mono line-height differs by ~2px between
+     JetBrains Mono and its fallback, which moves everything below it.
+     Same fix as elsewhere in this codebase. */
   line-height: 1.25rem;
   text-transform: uppercase;
   letter-spacing: var(--tracking-mono-label);
-  color: var(--blue-deep);
+  color: var(--type-d-deep);
   margin: 0 0 var(--space-4);
-  padding-bottom: var(--space-2);
-  border-bottom: 3px solid var(--pastel-blue);
-  display: inline-block;
 }
 
+body[data-template="A"] .case-type { color: var(--type-a-deep); }
+body[data-template="B"] .case-type { color: var(--type-b-deep); }
+body[data-template="C"] .case-type { color: var(--type-c-deep); }
+body[data-template="D"] .case-type { color: var(--type-d-deep); }
+
+/* Deliberately smaller than the old display-2 clamp (which topped out at
+   48px and ate the first screen). Tops out at 40px, so title + byline +
+   the opening paragraph land together above the fold on a laptop. */
 .case-header h1 {
   font-family: var(--font-display);
   font-weight: var(--weight-display);
-  font-size: var(--text-display-2);
-  line-height: var(--leading-display-2);
-  letter-spacing: var(--tracking-display-2);
+  font-size: clamp(1.75rem, 1.4rem + 1.1vw, 2.5rem);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
   margin: 0 0 var(--space-4);
-  max-width: 22ch;
+  max-width: 26ch;
   text-wrap: balance;
 }
 
 .case-header .entity-line {
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   line-height: 1.5;
-  color: var(--color-ink);
   margin: 0;
-  max-width: 60ch;
+  max-width: 58ch;
 }
 
-/* Template A's date/scale line, Template B's stack/team-shape line.
-   Omitted entirely rather than invented where the CV doesn't say. */
 .case-header .case-context {
   font-family: var(--font-mono);
   font-size: var(--text-mono-label);
   line-height: 1.6;
   letter-spacing: var(--tracking-mono-label);
   color: var(--color-line);
-  margin: var(--space-4) 0 0;
+  margin: var(--space-3) 0 0;
 }
 
-/* ---- Reading column ---- */
+/* ---- Two-column body ---- */
 
-/* Left-aligned, not centred: the header, /work, /about and the landing
-   page all hang off the same left edge, and a centred reading column here
-   alone would give the site a second column axis — exactly the "two
-   different sites" problem PRD v2 §1 is fixing. The measure is controlled
-   by max-width on the prose itself instead. */
-.case-body {
-  max-width: 68ch;
+.case-layout {
+  max-width: 62rem;
+  margin: 0 auto;
   padding: var(--space-7) var(--space-5) var(--space-6);
-  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.case-body {
+  /* The measure lives here, on the prose itself, rather than on a
+     wrapper — so the column can sit in a wider centred layout without
+     the text line ever getting long. */
+  max-width: 66ch;
 }
 
 .case-block {
   margin-bottom: var(--space-7);
 }
+.case-block:last-child { margin-bottom: 0; }
 
+/* Archivo at a modest size — not mono, not uppercase, not an editorial
+   serif. Sentence case, as written in the data. */
 .case-block h2 {
-  font-family: var(--font-mono);
-  font-size: var(--text-mono-label);
-  line-height: 1.25rem;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono-label);
-  color: var(--blue-deep);
-  border-bottom: 3px solid var(--pastel-blue);
-  padding-bottom: var(--space-2);
-  margin: 0 0 var(--space-5);
-  display: inline-block;
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-size: 1.3rem;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+  color: var(--color-ink);
+  margin: 0 0 var(--space-4);
 }
 
 .case-block p {
@@ -108,41 +130,90 @@
 }
 .case-block p:last-child { margin-bottom: 0; }
 
-/* Capability tags demoted to metadata at the foot of the piece — PRD v2
-   §7 (v1's F4: the taxonomy had become the interface). Not in the header,
-   not competing with the title, not the first thing anyone reads. */
-.case-meta-tags {
+/* ---- Side column ---- */
+
+.case-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.case-aside-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-mono-label);
+  line-height: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono-label);
+  color: var(--color-line);
+  margin: 0 0 var(--space-2);
+}
+
+.case-toc ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.case-toc a {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  line-height: 1.4;
+  text-decoration: none;
+  color: var(--color-ink);
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+}
+.case-toc a:hover { color: var(--type-d-deep); }
+body[data-template="A"] .case-toc a:hover { color: var(--type-a-deep); }
+body[data-template="B"] .case-toc a:hover { color: var(--type-b-deep); }
+body[data-template="C"] .case-toc a:hover { color: var(--type-c-deep); }
+
+/* The numbered rhythm the reference uses to give a long read structure —
+   borrowed as spatial logic, not as styling. */
+.toc-num {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  line-height: 1rem;
+  letter-spacing: var(--tracking-mono-label);
+  color: var(--color-line);
+  flex: 0 0 auto;
+}
+
+.case-aside-value {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  margin: 0 0 var(--space-4);
+}
+
+.case-aside-tags {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-  align-items: center;
-  margin: var(--space-8) 0 0;
-  padding-top: var(--space-4);
-  border-top: var(--border-width) solid var(--border-color);
 }
 
-.case-meta-label,
-.case-meta-tag {
+.case-aside-tags li {
   font-family: var(--font-mono);
   font-size: 0.68rem;
   line-height: 1rem;
   text-transform: uppercase;
   letter-spacing: var(--tracking-mono-label);
-  padding: 3px var(--space-2);
-}
-
-.case-meta-label {
-  background: var(--pastel-blue-tint);
-  color: var(--blue-deep);
-}
-
-.case-meta-tag {
   color: var(--color-line);
+  padding: 3px var(--space-2);
+  border: var(--border-width) solid var(--border-color);
 }
 
 /* ---- Previous / next ---- */
 
 .case-nav {
+  max-width: 62rem;
+  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   gap: var(--space-5);
@@ -165,7 +236,7 @@
   line-height: 1.25rem;
   text-transform: uppercase;
   letter-spacing: var(--tracking-mono-label);
-  color: var(--lavender-deep);
+  color: var(--color-line);
   margin-bottom: var(--space-1);
 }
 
@@ -177,14 +248,31 @@
 
 .case-nav .next-case { text-align: right; margin-left: auto; }
 
+/* ---- 768: more room, still one column ---- */
 @media (min-width: 768px) {
-  .case-header {
-    padding: var(--space-8) var(--space-6) var(--space-6);
+  .case-header { padding: var(--space-8) var(--space-6); }
+  .case-layout { padding: var(--space-8) var(--space-6) var(--space-6); }
+  .case-nav { padding: var(--space-6) var(--space-6) var(--space-8); }
+}
+
+/* ---- 1100: the two-column arrangement ----
+   Designed for laptop widths specifically rather than inherited from a
+   desktop rule: the side column is a fixed 15rem and the prose keeps its
+   own measure, with the pair centred as a group. That fills the width
+   with something useful instead of leaving the right half empty, and the
+   text line never stretches. */
+@media (min-width: 1100px) {
+  .case-layout {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--space-8);
   }
-  .case-body {
-    padding: var(--space-8) var(--space-6) var(--space-7);
+
+  .case-aside {
+    flex: 0 0 15rem;
+    position: sticky;
+    top: var(--space-6);
   }
-  .case-nav {
-    padding: var(--space-6) var(--space-6) var(--space-8);
-  }
+
+  .case-body { flex: 1 1 auto; }
 }

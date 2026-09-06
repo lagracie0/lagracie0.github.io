@@ -380,3 +380,27 @@ PRD v2 supersedes the WRD. This turn is **Phase 1 only** (assign a template to e
 **Open, and blocking content rather than code:** §12's four questions are all still open. One is worth flagging specifically — §12 Q4 lists "70+ agents coordinated" among the numbers to confirm for a stats block. That figure appears nowhere in the CV or in any case data, so it is not used anywhere in these rewrites; Situation Room's scale line carries only what is confirmed (dates, a cluster of LGA desks, Osun State). The same applies to images (§12 Q1) — no case has one, and the PRD asks for a considered typographic treatment rather than an empty box where none exists, which is what Phase 2 will need to decide.
 
 **Launch blockers unchanged:** CV PDF still 404s from every Download CV link; the portrait is still a placeholder; Situation Room clearance is still unconfirmed. Blocker 3 (draft cases) is resolved by the delisting rule above.
+
+## Review — PRD v2 Phase 2 (part 1): warm palette, case pages, /work
+
+Palette approved before any CSS was written, per instruction. `/about` and `/contact` held back for review as asked — they inherit the warm neutrals site-wide (which was the explicit instruction: don't half-apply it) but keep their phase-1 layout until the next round.
+
+**Why the palette could finally be warm.** It read cold for a structural reason, not a stylistic one: red, amber and green were fenced off for RAG status meaning, so every warm hue was unusable and only blue/violet were left. Phase 1 retired RAG with the outcome block that carried it. Verified the tokens were genuinely unused before proposing anything.
+
+**Six values, all measured rather than estimated:** warm cream paper `#F6F2EA`, warm near-black ink `#1B1714` (deliberately not pure black, per the condition), warm grey line `#6B6259`, and four engagement-type hues — terracotta `#A8442B` (Live operation), ochre `#7F5A0D` (Product delivery), moss `#4F6134` (Built from nothing), plum `#7A3F55` (Ongoing function), each paired with a tint. Every combination clears WCAG AA including the awkward deep-on-tint one; the first ochre candidate failed it at 4.46 and was darkened rather than shipped. Minimum hue separation 29°, so the four stay tellable apart at small sizes.
+
+**Colour has real presence, not just tinted labels** (condition 1): each case page opens with a full-width band filled in its type's tint, and every `/work` card is a tint fill of its type. The category is legible before a word is read.
+
+**Kept deliberately distinct from the rejected cream-and-serif-and-terracotta look** (condition 2): four hues carrying distinct meaning rather than one decorative accent, warm near-black rather than pure black, and Archivo for section headings rather than an editorial serif — which also settles the earlier "serif or display" question in favour of display.
+
+**Case pages rebuilt.** The prose was pinned to a narrow left column with the right half of a laptop screen empty; it is now a type-coloured header band across the full width, then a two-column layout — a sticky side column (numbered section navigation, field, capabilities) beside the prose, centred as a group, collapsing to one column below 1100px. The title moved onto its own smaller clamp (tops out at 40px instead of 48px) so type, title, byline and the opening paragraph land together. Mono uppercase section headings are gone, replaced by Archivo at 1.3rem.
+
+**/work rebuilt.** Grouped by engagement type rather than led by filter rows, cards filled in their type's tint, capability tags removed from cards entirely — six identical mono chips were the first thing a visitor read, and colour does that job better. Filters remain but sit below the header. Three cards across at 1100px+ rather than two, because two at 1280 leaves them uncomfortably wide.
+
+**The scheduled `/work` CLS fix is done, and it went further than planned.** `scripts/build-work.mjs` now pre-renders both the chip row and the grouped card list as real DOM; `js/render-work.js` no longer builds anything, it attaches to what exists and filters by hiding. That removes the last after-paint injection on the site, and it also removed the `<noscript>` duplicate entirely — a JS-disabled visitor now gets the same 11 cards in the same 4 groups as everyone else, with no second copy to keep in sync. `scripts/build-noscript.mjs` was deleted as superseded.
+
+**Verified:** CLS **0.0000 on every page including /work**, twice each. Lighthouse 99–100 across all four categories on every page checked. No horizontal overflow at 375, 768, 1280 or 1440. Chips are keyboard-reachable with visible focus, activate on Enter, update `aria-pressed`, keep focus (nothing is rebuilt, so there is no focus to restore) and sync the URL. Page weight 137–151 KB against the 500 KB budget.
+
+**Corrected in passing:** the `/work` header claimed twelve engagements; eleven are listed since Frobits was delisted.
+
+**Still open:** `/about` and `/contact` await review before being moved onto the type system. Launch blockers unchanged — CV PDF, portrait photo, Situation Room clearance.

@@ -1,90 +1,229 @@
-/* /work — listing page layout. Reuses .chip, .filters, .card-groups,
-   .case-card from home.css (linked alongside this file) for the filter
-   controls and cards themselves; this file owns the page header and the
-   active-filter summary row (F4). */
+/* /work — PRD v2 phase 2.
+   Grouped by engagement type rather than led by filter rows, with each
+   group's cards filled in that type's tint so the four categories are
+   learned by sight. Capability tags are gone from cards entirely: they
+   are taxonomy, not content (§7, v1's F4 — six identical mono chips were
+   the first thing a visitor read). Colour does that job now.
+
+   This file now owns the whole page. It used to lean on .chip/.filters/
+   .case-card from home.css, which js/render-work.js built at runtime;
+   both the markup and the styling are local and static now. */
 
 .work-header {
-  padding: var(--space-6) var(--space-5) var(--space-4);
-  border-bottom: var(--border-width) solid var(--border-color);
+  padding: var(--space-7) var(--space-5) var(--space-6);
+  max-width: 62rem;
+  margin: 0 auto;
 }
+
 .work-header h1 {
   font-family: var(--font-display);
   font-weight: var(--weight-display);
-  font-size: var(--text-display-2);
-  line-height: var(--leading-display-2);
-  margin: 0 0 var(--space-2);
+  font-size: clamp(2rem, 1.6rem + 1.4vw, 2.75rem);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--space-4);
 }
+
 .work-header p {
   font-family: var(--font-serif);
+  font-size: 1.1875rem;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 56ch;
+}
+
+#work-app {
+  max-width: 62rem;
+  margin: 0 auto;
+  padding: 0 var(--space-5) var(--space-8);
+}
+
+/* ---- Filters: present, but no longer the first thing on the page ---- */
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5) 0 var(--space-4);
+  border-top: var(--border-width) solid var(--border-color);
+}
+
+.filter-row {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+}
+
+.filter-row-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-mono-label);
+  line-height: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono-label);
+  color: var(--color-line);
+  flex: 0 0 5.5rem;
+}
+
+.chip-scroll {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+  flex: 1 1 auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chip {
+  font-family: var(--font-mono);
+  font-size: var(--text-mono-label);
+  line-height: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono-label);
+  white-space: nowrap;
+  /* >=44px tall for touch (PRD v2 §8) without inflating the visual
+     weight: padding does the work, not font size. */
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-line);
+  background: transparent;
+  color: var(--color-ink);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.chip:hover { border-color: var(--color-ink); }
+.chip[aria-pressed="true"] {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: var(--color-paper);
+}
+
+.work-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-mono-label);
+  line-height: 1.25rem;
+  letter-spacing: var(--tracking-mono-label);
+  color: var(--color-line);
+  margin: 0 0 var(--space-6);
+}
+
+/* ---- Type groups ---- */
+
+.work-group {
+  margin-bottom: var(--space-8);
+}
+
+.work-group-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 3px solid var(--type-d-tint);
+}
+
+.work-group[data-template="A"] .work-group-head { border-bottom-color: var(--type-a-tint); }
+.work-group[data-template="B"] .work-group-head { border-bottom-color: var(--type-b-tint); }
+.work-group[data-template="C"] .work-group-head { border-bottom-color: var(--type-c-tint); }
+.work-group[data-template="D"] .work-group-head { border-bottom-color: var(--type-d-tint); }
+
+.work-group-head h2 {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-size: 1.35rem;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+  margin: 0;
+  color: var(--type-d-deep);
+}
+
+.work-group[data-template="A"] .work-group-head h2 { color: var(--type-a-deep); }
+.work-group[data-template="B"] .work-group-head h2 { color: var(--type-b-deep); }
+.work-group[data-template="C"] .work-group-head h2 { color: var(--type-c-deep); }
+.work-group[data-template="D"] .work-group-head h2 { color: var(--type-d-deep); }
+
+.work-group-blurb {
+  font-family: var(--font-serif);
+  font-style: italic;
   font-size: 1rem;
   color: var(--color-line);
   margin: 0;
 }
 
-.active-filters {
+.work-group-cards {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-4) var(--space-5);
-  border-bottom: var(--border-width) solid var(--border-color);
-}
-.active-filters .active-filters-label {
-  font-family: var(--font-mono);
-  font-size: var(--text-mono-label);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono-label);
-  color: var(--color-line);
-}
-.filter-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-family: var(--font-mono);
-  font-size: var(--text-mono-label);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono-label);
-  background: var(--color-ink);
-  color: var(--color-paper);
-  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
-  border: none;
-  cursor: pointer;
-}
-.filter-pill .remove-x {
-  font-size: 0.9em;
-}
-.clear-all {
-  font-family: var(--font-mono);
-  font-size: var(--text-mono-label);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono-label);
-  background: none;
-  border: none;
-  color: var(--color-line);
-  text-decoration: underline;
-  cursor: pointer;
-  padding: var(--space-1) 0;
-}
-
-.work-list {
-  padding: var(--space-5);
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  flex-direction: column;
   gap: var(--space-4);
-  align-content: start;
 }
-.work-list .case-card { margin-bottom: 0; }
 
-.work-empty {
-  padding: var(--space-6) var(--space-5);
-  font-family: var(--font-serif);
-  font-style: italic;
-  color: var(--color-line);
-  max-width: 60ch;
+/* ---- Cards: the tint fill is the category signal ---- */
+
+.work-card {
+  display: block;
+  text-decoration: none;
+  color: var(--color-ink);
+  background: var(--type-d-tint);
+  padding: var(--space-5);
 }
-.work-empty .adjacent-list {
+
+.work-card[data-template="A"] { background: var(--type-a-tint); }
+.work-card[data-template="B"] { background: var(--type-b-tint); }
+.work-card[data-template="C"] { background: var(--type-c-tint); }
+.work-card[data-template="D"] { background: var(--type-d-tint); }
+
+.work-card:hover { opacity: 0.88; }
+
+.work-card-meta {
   font-family: var(--font-mono);
-  font-style: normal;
-  font-size: 0.85rem;
-  margin-top: var(--space-3);
+  font-size: var(--text-mono-label);
+  line-height: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono-label);
+  margin: 0 0 var(--space-3);
+  color: var(--type-d-deep);
+}
+
+.work-card[data-template="A"] .work-card-meta { color: var(--type-a-deep); }
+.work-card[data-template="B"] .work-card-meta { color: var(--type-b-deep); }
+.work-card[data-template="C"] .work-card-meta { color: var(--type-c-deep); }
+.work-card[data-template="D"] .work-card-meta { color: var(--type-d-deep); }
+
+.work-card-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-size: 1.15rem;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work-card, .chip { transition: none; }
+}
+
+/* ---- 768 ---- */
+@media (min-width: 768px) {
+  .work-header { padding: var(--space-8) var(--space-6) var(--space-6); }
+  #work-app { padding: 0 var(--space-6) var(--space-8); }
+  .work-group-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+  }
+  /* Horizontal scroll is the right answer on a phone, where the row
+     genuinely can't fit; at this width there is room, and a row that
+     scrolls when it doesn't need to just hides half the filters. */
+  .chip-scroll {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
+
+/* ---- 1100: laptop widths get three across, designed rather than
+   inherited — two columns at 1280 leaves cards uncomfortably wide. ---- */
+@media (min-width: 1100px) {
+  .work-group-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-5);
+  }
+  .work-card { padding: var(--space-5) var(--space-5) var(--space-6); }
 }
