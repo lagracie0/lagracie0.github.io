@@ -15,7 +15,7 @@
 // on that page to regenerate — see scripts/build-home.mjs for how its
 // three featured cases are kept in sync with the data instead.
 //
-// The ordering logic here (P0 first, then most recent) is duplicated from
+// The ordering logic here (most recent first) is duplicated from
 // js/render-work.js rather than imported — that module calls init()
 // against `document` at load time, which would throw in Node. Keep the
 // two in sync if the ordering rule ever changes.
@@ -23,8 +23,8 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { CAPABILITIES, CASES } from '../data/cases.js';
-import { displayLabel, displayDateRange, isNeedsInput } from '../js/case-utils.js';
+import { CAPABILITIES, LISTED_CASES } from '../data/cases.js';
+import { displayLabel, displayDateRange } from '../js/case-utils.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -59,14 +59,13 @@ function replaceBetweenMarkers(html, start, end, replacement, label) {
 // work/index.html: flat list, P0 first then most recent — must match
 // js/render-work.js's orderForWork exactly.
 function recencyKey(caseObj) {
-  const end = isNeedsInput(caseObj.dateEnd) ? null : caseObj.dateEnd;
-  const start = isNeedsInput(caseObj.dateStart) ? null : caseObj.dateStart;
-  return end || start || null;
+  return caseObj.dateEnd || caseObj.dateStart || null;
 }
 
+// Most recent first. PRD v2 dropped v1's P0/P1 launch-list distinction,
+// so recency is the whole ordering now.
 function orderForWork(cases) {
   return [...cases].sort((a, b) => {
-    if (a.priority !== b.priority) return a.priority === 'P0' ? -1 : 1;
     const ka = recencyKey(a);
     const kb = recencyKey(b);
     if (ka === null && kb === null) return 0;
@@ -77,7 +76,7 @@ function orderForWork(cases) {
 }
 
 function buildWorkList() {
-  return orderForWork(CASES).map(cardHtml).join('\n');
+  return orderForWork(LISTED_CASES).map(cardHtml).join('\n');
 }
 
 function run() {
@@ -92,7 +91,7 @@ function run() {
   );
   writeFileSync(workPath, workUpdated);
 
-  console.log(`Regenerated no-JS fallback: work/index.html (${CASES.length} cases, P0 then recency).`);
+  console.log(`Regenerated no-JS fallback: work/index.html (${LISTED_CASES.length} listed cases, most recent first).`);
 }
 
 run();

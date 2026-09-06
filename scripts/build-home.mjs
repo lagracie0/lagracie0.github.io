@@ -12,7 +12,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { DOMAINS, CASES } from '../data/cases.js';
+import { DOMAINS, LISTED_CASES } from '../data/cases.js';
 import { displayLabel, displayDateRange } from '../js/case-utils.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -38,9 +38,9 @@ function metaLine(caseObj) {
 }
 
 function cardHtml({ slug, treatment }) {
-  const caseObj = CASES.find((c) => c.slug === slug);
+  const caseObj = LISTED_CASES.find((c) => c.slug === slug);
   if (!caseObj) {
-    throw new Error(`build-home.mjs: featured slug "${slug}" not found in data/cases.js`);
+    throw new Error(`build-home.mjs: featured slug "${slug}" is not a listed case in data/cases.js — either it does not exist, or it is listed: false and therefore has no page to link to.`);
   }
   const href = `work/${caseObj.slug}/`;
   const meta = metaLine(caseObj);

@@ -1,9 +1,12 @@
-/* Shared layout for /about, /contact, /method — reuses .case-block/.case-body
-   from case.css for prose sections, and adds the few components specific to
-   these three pages (experience entries, method steps, contact block). Uses
-   the same pastel accent tokens (--pastel-blue etc., defined in
-   css/home.css, loaded on every page) as the landing page and case pages —
-   one visual system, not three. */
+/* Shared layout for /about and /contact — reuses .case-block/.case-body
+   from case.css for prose sections, and adds the few components specific
+   to those two pages (experience entries, credentials, contact block).
+   Uses the same pastel accent tokens (--pastel-blue etc., defined in
+   css/home.css, loaded on every page) as the landing page and case pages
+   — one visual system, not three.
+
+   /method was cut in PRD v2 §4 (it rested on a single case and said so on
+   the page), so its .method-step/.method-note rules went with it. */
 
 .page-header {
   padding: var(--space-6) var(--space-5) var(--space-5);
@@ -122,68 +125,6 @@
   display: block;
   margin-top: 2px;
 }
-
-/* Method steps */
-.method-note {
-  font-family: var(--font-serif);
-  font-style: italic;
-  color: var(--color-line);
-  font-size: 0.98rem;
-  margin: 0 0 var(--space-6);
-  max-width: 60ch;
-}
-
-.method-steps {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  counter-reset: method-step;
-}
-
-.method-step {
-  counter-increment: method-step;
-  display: grid;
-  grid-template-columns: 3rem 1fr;
-  gap: var(--space-4);
-  background: var(--pastel-blue-tint);
-  padding: var(--space-5);
-  margin-bottom: var(--space-3);
-}
-.method-step:nth-child(even) { background: var(--pastel-lavender-tint); }
-
-.method-step::before {
-  content: counter(method-step, decimal-leading-zero);
-  font-family: var(--font-mono);
-  font-size: 1.1rem;
-  color: var(--blue-deep);
-  font-weight: var(--weight-mono-bold);
-}
-.method-step:nth-child(even)::before { color: var(--lavender-deep); }
-
-.method-step h2 {
-  font-family: var(--font-serif);
-  font-weight: var(--weight-serif);
-  font-size: 1.15rem;
-  margin: 0 0 var(--space-2);
-}
-
-.method-step p {
-  font-family: var(--font-serif);
-  font-size: var(--text-body);
-  line-height: var(--leading-body);
-  margin: 0 0 var(--space-3);
-}
-
-.method-step .evidence-link {
-  font-family: var(--font-mono);
-  font-size: var(--text-mono-label);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono-label);
-  color: var(--color-ink);
-  text-decoration: none;
-  border-bottom: 1px solid var(--color-ink);
-}
-.method-step .evidence-link:hover { opacity: 0.7; }
 
 /* Contact page */
 .contact-links {

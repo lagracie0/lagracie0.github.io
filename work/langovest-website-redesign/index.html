@@ -3,9 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Langovest website redesign — Ayomide Grace Amusan</title>
-<meta name="description" content="I ran the Langovest website redesign across design and engineering, as part of my Project Manager and Coordinator role.">
+<title>Langovest website redesign — fixing the briefs, not just the board — Ayomide Grace Amusan</title>
+<meta name="description" content="The Langovest website, rebuilt across design and engineering during my time there as project manager and coordinator.">
 <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
+<!-- Preloading these is load-bearing, not an optimisation. Without them
+     the metric-matched fallbacks paint first and the real faces swap in
+     afterwards, re-wrapping the display title and the mono nav — measured
+     as a deterministic ~0.12 CLS on every case page, while the pages that
+     did preload measured 0. -->
 <link rel="preload" as="font" type="font/woff2" href="../../fonts/archivo-black-expanded.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="../../fonts/jetbrains-mono-regular.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="../../fonts/jetbrains-mono-bold.woff2" crossorigin>
@@ -14,16 +19,16 @@
 <link rel="stylesheet" href="../../css/tokens.css">
 <link rel="stylesheet" href="../../css/home.css">
 <link rel="stylesheet" href="../../css/case.css">
-<meta property="og:title" content="Langovest website redesign">
-<meta property="og:description" content="I ran the Langovest website redesign across design and engineering, as part of my Project Manager and Coordinator role.">
+<meta property="og:title" content="Langovest website redesign — fixing the briefs, not just the board">
+<meta property="og:description" content="The Langovest website, rebuilt across design and engineering during my time there as project manager and coordinator.">
 <meta property="og:image" content="../../assets/og/langovest-website-redesign.png">
 <meta property="og:type" content="article">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "CreativeWork",
-  "name": "Langovest website redesign",
-  "description": "I ran the Langovest website redesign across design and engineering, as part of my Project Manager and Coordinator role.",
+  "name": "Langovest website redesign — fixing the briefs, not just the board",
+  "description": "The Langovest website, rebuilt across design and engineering during my time there as project manager and coordinator.",
   "about": "Developer / web infrastructure",
   "keywords": "Delivery & release, Research & reporting",
   "creator": {
@@ -34,17 +39,14 @@
 }
 </script>
 </head>
-<body>
+<body data-template="B">
 
 <a class="skip-link" href="#main">Skip to content</a>
-
-<div class="draft-banner">Draft — contains placeholder content, not for publication</div>
 
 <header class="site-header">
   <a class="wordmark" href="../../">Ayomide Amusan</a>
   <nav aria-label="Primary">
     <a href="../../work/">Work</a>
-    <a href="../../method/">Method</a>
     <a href="../../about/">About</a>
     <a class="cv-link" href="../../assets/cv/ayomide-amusan-cv.pdf">Download CV</a>
   </nav>
@@ -52,62 +54,44 @@
 
 <main id="main">
   <header class="case-header">
-    <p class="case-domain">Developer / web infrastructure</p>
-    <h1>Langovest website redesign</h1>
+    <p class="case-type">Product delivery</p>
+    <h1>Langovest website redesign — fixing the briefs, not just the board</h1>
     <p class="entity-line">Langovest · 2026</p>
-    <ul class="card-tags">
-      <li>Delivery &amp; release</li>
-      <li>Research &amp; reporting</li>
-    </ul>
   </header>
 
   <div class="case-body">
     <section class="case-block">
-      <h2>Situation</h2>
-      <p>I ran the Langovest website redesign across design and engineering, as part of my Project Manager and Coordinator role.</p>
+      <h2>The product</h2>
+      <p>The Langovest website, rebuilt across design and engineering during my time there as project manager and coordinator.</p>
     </section>
 
     <section class="case-block">
-      <h2>What was missing</h2>
-      <p>Upstream project briefs weren't removing requirement ambiguity for the software team before this delivery structure was in place.</p>
+      <h2>Where I came in</h2>
+      <p>Upstream of the software team, which is where the actual problem was.</p>
+      <p>Briefs were reaching engineering without the detail needed to act on them. That is the expensive kind of problem, because it does not look like a delay — it looks like a team asking reasonable questions.</p>
     </section>
 
     <section class="case-block">
-      <h2>What I built</h2>
-      <ul class="plain-list">
-  <li>Ran the delivery lifecycle in Trello, and structured upstream project briefs that removed requirement ambiguity for the software team, holding 95% of tickets to schedule.</li>
-</ul>
+      <h2>How delivery ran</h2>
+      <p>I ran the delivery lifecycle in Trello and restructured the project briefs going into it, so that what reached the software team was specific enough to start on without a round trip first.</p>
+      <p>That is most of what delivery management is on a redesign. The board is the visible artefact and the briefs are not, but the briefs are what decide whether the board moves.</p>
     </section>
 
     <section class="case-block">
-      <h2>Decisions and trade-offs</h2>
-      <ul class="plain-list">
-  <li><span class="needs-input">2–3 real decision forks and what was traded off</span></li>
-</ul>
+      <h2>What shipped</h2>
+      <p>The redesign was delivered across both design and engineering, with 95% of tickets held to schedule.</p>
     </section>
 
-    <section class="case-block">
-      <h2>Outcome</h2>
-      <div class="outcome-item"><span class="rag-badge green">green</span><p>The redesign was delivered across design and engineering, holding 95% of tickets to schedule.</p></div>
-      
-    <div class="metric">
-      <span class="metric-value">95%</span>
-      <span class="metric-label">of tickets delivered to schedule</span>
-      <span class="metric-method"><span class="needs-input">what counted as &quot;to schedule,&quot; total ticket count, and the measurement period, per R2</span></span>
-    </div>
-    </section>
-
-    <section class="case-block">
-      <h2>Artifacts</h2>
-      <ul class="artifact-list">
-  <li><span class="needs-input">a redacted/reconstructed artifact — e.g. ticket brief template, board structure</span></li>
-</ul>
-    </section>
+    <p class="case-meta-tags">
+      <span class="case-meta-label">Developer / web infrastructure</span>
+      <span class="case-meta-tag">Delivery &amp; release</span>
+      <span class="case-meta-tag">Research &amp; reporting</span>
+    </p>
   </div>
 
   <nav class="case-nav" aria-label="Other cases">
-    <a class="prev-case" href="../osun-tech-festival/"><span class="nav-label">Previous — Events &amp; community</span><span class="nav-title">Osun Tech Festival — full festival on a one-month lead time</span></a>
-    <a class="next-case" href="../boldtron-marketplace-app/"><span class="nav-label">Next — Consumer &amp; marketplaces</span><span class="nav-title">Boldtron — marketplace app, remote team, sole point of accountability</span></a>
+    <a class="prev-case" href="../calnita-beauty-mvps/"><span class="nav-label">Previous</span><span class="nav-title">Calnita — three MVPs for hyper-personalised beauty discovery</span></a>
+    <a class="next-case" href="../langovest-volunteer-network/"><span class="nav-label">Next</span><span class="nav-title">Langovest Volunteer Network — from zero to twelve across four countries</span></a>
   </nav>
 </main>
 

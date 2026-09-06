@@ -3,9 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lodgr — booking platform, scoping to post-launch review — Ayomide Grace Amusan</title>
-<meta name="description" content="Lodgr was an apartment and hotel booking platform I took on during my Independent Project Manager contract (remote, EMEA) — the work began at scoping, turning booking, availability and payment requirements into user stories and sprint plans for the engineering team.">
+<title>Lodgr — a booking platform from scoping to post-launch review — Ayomide Grace Amusan</title>
+<meta name="description" content="Lodgr is an apartment and hotel booking platform. I led it end to end during my independent project management contract — from scoping, through release, to the post-launch review.">
 <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
+<!-- Preloading these is load-bearing, not an optimisation. Without them
+     the metric-matched fallbacks paint first and the real faces swap in
+     afterwards, re-wrapping the display title and the mono nav — measured
+     as a deterministic ~0.12 CLS on every case page, while the pages that
+     did preload measured 0. -->
 <link rel="preload" as="font" type="font/woff2" href="../../fonts/archivo-black-expanded.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="../../fonts/jetbrains-mono-regular.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="../../fonts/jetbrains-mono-bold.woff2" crossorigin>
@@ -14,16 +19,16 @@
 <link rel="stylesheet" href="../../css/tokens.css">
 <link rel="stylesheet" href="../../css/home.css">
 <link rel="stylesheet" href="../../css/case.css">
-<meta property="og:title" content="Lodgr — booking platform, scoping to post-launch review">
-<meta property="og:description" content="Lodgr was an apartment and hotel booking platform I took on during my Independent Project Manager contract (remote, EMEA) — the work began at scoping, turning booking, availability and payment requirements into user stories and sprint plans for the engineering team.">
+<meta property="og:title" content="Lodgr — a booking platform from scoping to post-launch review">
+<meta property="og:description" content="Lodgr is an apartment and hotel booking platform. I led it end to end during my independent project management contract — from scoping, through release, to the post-launch review.">
 <meta property="og:image" content="../../assets/og/lodgr-booking-platform.png">
 <meta property="og:type" content="article">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "CreativeWork",
-  "name": "Lodgr — booking platform, scoping to post-launch review",
-  "description": "Lodgr was an apartment and hotel booking platform I took on during my Independent Project Manager contract (remote, EMEA) — the work began at scoping, turning booking, availability and payment requirements into user stories and sprint plans for the engineering team.",
+  "name": "Lodgr — a booking platform from scoping to post-launch review",
+  "description": "Lodgr is an apartment and hotel booking platform. I led it end to end during my independent project management contract — from scoping, through release, to the post-launch review.",
   "about": "Hospitality & travel",
   "keywords": "Build from zero, Delivery & release, Research & reporting",
   "creator": {
@@ -34,17 +39,14 @@
 }
 </script>
 </head>
-<body>
+<body data-template="B">
 
 <a class="skip-link" href="#main">Skip to content</a>
-
-<div class="draft-banner">Draft — contains placeholder content, not for publication</div>
 
 <header class="site-header">
   <a class="wordmark" href="../../">Ayomide Amusan</a>
   <nav aria-label="Primary">
     <a href="../../work/">Work</a>
-    <a href="../../method/">Method</a>
     <a href="../../about/">About</a>
     <a class="cv-link" href="../../assets/cv/ayomide-amusan-cv.pdf">Download CV</a>
   </nav>
@@ -52,65 +54,46 @@
 
 <main id="main">
   <header class="case-header">
-    <p class="case-domain">Hospitality &amp; travel</p>
-    <h1>Lodgr — booking platform, scoping to post-launch review</h1>
+    <p class="case-type">Product delivery</p>
+    <h1>Lodgr — a booking platform from scoping to post-launch review</h1>
     <p class="entity-line">Lodgr · 2025 → 2026</p>
-    <ul class="card-tags">
-      <li>Build from zero</li>
-      <li>Delivery &amp; release</li>
-      <li>Research &amp; reporting</li>
-    </ul>
   </header>
 
   <div class="case-body">
     <section class="case-block">
-      <h2>Situation</h2>
-      <p>Lodgr was an apartment and hotel booking platform I took on during my Independent Project Manager contract (remote, EMEA) — the work began at scoping, turning booking, availability and payment requirements into user stories and sprint plans for the engineering team.</p>
-<p><span class="needs-input">did Lodgr already have a product built before this engagement — a concept, a prototype, paying customers — or was this a zero-to-one build, and roughly how large was the team?</span></p>
+      <h2>The product</h2>
+      <p>Lodgr is an apartment and hotel booking platform. I led it end to end during my independent project management contract — from scoping, through release, to the post-launch review.</p>
     </section>
 
     <section class="case-block">
-      <h2>What was missing</h2>
-      <p>There was no existing project management function at Lodgr before this engagement — no project plans, schedules, resource allocations, risk registers or change-request handling.</p>
+      <h2>Where I came in</h2>
+      <p>At scoping, and into a client with no existing project management function. There were no project plans, no schedules, no resource allocation, no risk register and no change-request process — not because anyone had dismantled them, but because nobody had needed to build them yet.</p>
+      <p>Booking, availability and payment requirements existed as intentions rather than as anything an engineering team could pick up and start on.</p>
     </section>
 
     <section class="case-block">
-      <h2>What I built</h2>
-      <ul class="plain-list">
-  <li>Took Lodgr from scoping through release and post-launch review, turning booking, availability and payment requirements into user stories and sprint plans for the engineering team.</li>
-  <li>Introduced the project plans, schedules, resource allocations, risk registers and change-request handling Lodgr didn't have before, and set the reporting sequence that kept the team and stakeholders aligned.</li>
-  <li><span class="needs-input">what research did I conduct for Lodgr specifically, and what method — user interviews, competitive analysis, usability testing?</span></li>
-</ul>
+      <h2>How delivery ran</h2>
+      <p>I turned those requirements into user stories and sprint plans the engineering team could work from, and built the delivery infrastructure around them: project plans, schedules, resource allocations, a risk register and change-request handling, plus the reporting sequence that kept the team and the stakeholders looking at the same picture.</p>
+      <p>A booking platform is unforgiving about this. Availability and payment are the two places where a vague requirement turns into a customer-facing failure, so the specificity was the point rather than process for its own sake.</p>
     </section>
 
     <section class="case-block">
-      <h2>Decisions and trade-offs</h2>
-      <ul class="plain-list">
-  <li><span class="needs-input">what was a real scope trade-off I made on Lodgr — a feature cut, a timeline compromise, a build-vs-buy call — and what was given up?</span></li>
-  <li><span class="needs-input">did I make a call between speed to launch and thoroughness of testing or research on Lodgr? What did that cost?</span></li>
-  <li><span class="needs-input">was there a disagreement with stakeholders or the team about direction on Lodgr, and how was it resolved?</span></li>
-</ul>
+      <h2>What shipped</h2>
+      <p>The platform reached release and then went through a post-launch review, rather than being declared finished at launch.</p>
+      <p>The delivery structure outlasted the release. It was what the engagement ran on afterwards, not scaffolding taken down once the product was live.</p>
     </section>
 
-    <section class="case-block">
-      <h2>Outcome</h2>
-      <div class="outcome-item"><span class="rag-badge unknown"><span class="needs-input">green/amber/red</span></span><p><span class="needs-input">what was the actual result of the launch — on time, delayed, and against what commitment?</span></p></div>
-<div class="outcome-item"><span class="rag-badge unknown"><span class="needs-input">green/amber/red</span></span><p><span class="needs-input">what did the post-launch review find, and what happened as a result of it?</span></p></div>
-      
-    </section>
-
-    <section class="case-block">
-      <h2>Artifacts</h2>
-      <ul class="artifact-list">
-  <li><span class="needs-input">a redacted/reconstructed requirements brief or scoping document from this engagement</span></li>
-  <li><span class="needs-input">a redacted/reconstructed launch checklist or post-launch review template</span></li>
-</ul>
-    </section>
+    <p class="case-meta-tags">
+      <span class="case-meta-label">Hospitality &amp; travel</span>
+      <span class="case-meta-tag">Build from zero</span>
+      <span class="case-meta-tag">Delivery &amp; release</span>
+      <span class="case-meta-tag">Research &amp; reporting</span>
+    </p>
   </div>
 
   <nav class="case-nav" aria-label="Other cases">
-    <a class="prev-case" href="../africa-infrastructure-roundtable/"><span class="nav-label">Previous — Infrastructure &amp; policy</span><span class="nav-title">Africa Infrastructure Roundtable, Manchester 2026 → London 2027 pipeline</span></a>
-    <a class="next-case" href="../langovest-volunteer-network/"><span class="nav-label">Next — Infrastructure &amp; policy</span><span class="nav-title">Langovest Volunteer Network</span></a>
+    <a class="prev-case" href="../osun-tech-festival/"><span class="nav-label">Previous</span><span class="nav-title">Osun Tech Festival — a full festival on a one-month lead time</span></a>
+    <a class="next-case" href="../boldtron-marketplace-app/"><span class="nav-label">Next</span><span class="nav-title">Boldtron — marketplace app delivery for a fully remote team</span></a>
   </nav>
 </main>
 

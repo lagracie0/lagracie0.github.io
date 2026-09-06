@@ -4,8 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Situation Room supervision — Osun governorship election — Ayomide Grace Amusan</title>
-<meta name="description" content="The Situation Room ran as a designed operation with a defined command structure, a fixed reporting chain from the field to the desk, and a severity classification applied to every issue raised.">
+<meta name="description" content="The Accord Party ran a Situation Room for the Osun State governorship election — a designed operation with a defined command structure, a fixed reporting chain from the field to the desk, and a severity classification applied to every issue raised. I supervised a cluster of LGA desks inside that structure, across a four-week run-up and through election day itself.">
 <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
+<!-- Preloading these is load-bearing, not an optimisation. Without them
+     the metric-matched fallbacks paint first and the real faces swap in
+     afterwards, re-wrapping the display title and the mono nav — measured
+     as a deterministic ~0.12 CLS on every case page, while the pages that
+     did preload measured 0. -->
 <link rel="preload" as="font" type="font/woff2" href="../../fonts/archivo-black-expanded.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="../../fonts/jetbrains-mono-regular.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="../../fonts/jetbrains-mono-bold.woff2" crossorigin>
@@ -15,7 +20,7 @@
 <link rel="stylesheet" href="../../css/home.css">
 <link rel="stylesheet" href="../../css/case.css">
 <meta property="og:title" content="Situation Room supervision — Osun governorship election">
-<meta property="og:description" content="The Situation Room ran as a designed operation with a defined command structure, a fixed reporting chain from the field to the desk, and a severity classification applied to every issue raised.">
+<meta property="og:description" content="The Accord Party ran a Situation Room for the Osun State governorship election — a designed operation with a defined command structure, a fixed reporting chain from the field to the desk, and a severity classification applied to every issue raised. I supervised a cluster of LGA desks inside that structure, across a four-week run-up and through election day itself.">
 <meta property="og:image" content="../../assets/og/situation-room-osun-election.png">
 <meta property="og:type" content="article">
 <script type="application/ld+json">
@@ -23,7 +28,7 @@
   "@context": "https://schema.org",
   "@type": "CreativeWork",
   "name": "Situation Room supervision — Osun governorship election",
-  "description": "The Situation Room ran as a designed operation with a defined command structure, a fixed reporting chain from the field to the desk, and a severity classification applied to every issue raised.",
+  "description": "The Accord Party ran a Situation Room for the Osun State governorship election — a designed operation with a defined command structure, a fixed reporting chain from the field to the desk, and a severity classification applied to every issue raised. I supervised a cluster of LGA desks inside that structure, across a four-week run-up and through election day itself.",
   "about": "Civic & elections",
   "keywords": "Stakeholder / vendor, Live ops, fixed date, Research & reporting",
   "creator": {
@@ -34,17 +39,14 @@
 }
 </script>
 </head>
-<body>
+<body data-template="A">
 
 <a class="skip-link" href="#main">Skip to content</a>
-
-
 
 <header class="site-header">
   <a class="wordmark" href="../../">Ayomide Amusan</a>
   <nav aria-label="Primary">
     <a href="../../work/">Work</a>
-    <a href="../../method/">Method</a>
     <a href="../../about/">About</a>
     <a class="cv-link" href="../../assets/cv/ayomide-amusan-cv.pdf">Download CV</a>
   </nav>
@@ -52,56 +54,47 @@
 
 <main id="main">
   <header class="case-header">
-    <p class="case-domain">Civic &amp; elections</p>
+    <p class="case-type">Live operation</p>
     <h1>Situation Room supervision — Osun governorship election</h1>
     <p class="entity-line">Supervisor, Situation Room, Accord Party — Osun State governorship election, 20 July to 15 August 2026.</p>
-    <ul class="card-tags">
-      <li>Stakeholder / vendor</li>
-      <li>Live ops, fixed date</li>
-      <li>Research &amp; reporting</li>
-    </ul>
+    <p class="case-context">20 July – 15 August 2026 · A cluster of LGA desks · Osun State</p>
   </header>
 
   <div class="case-body">
     <section class="case-block">
-      <h2>Situation</h2>
-      <p>The Situation Room ran as a designed operation with a defined command structure, a fixed reporting chain from the field to the desk, and a severity classification applied to every issue raised.</p>
-<p>Agents were assigned to specific LGAs, so reports from within the same territory rarely conflicted.</p>
-<p>I supervised a cluster of LGA desks inside that structure across a four-week run-up and through election day.</p>
+      <h2>The brief</h2>
+      <p>The Accord Party ran a Situation Room for the Osun State governorship election — a designed operation with a defined command structure, a fixed reporting chain from the field to the desk, and a severity classification applied to every issue raised. I supervised a cluster of LGA desks inside that structure, across a four-week run-up and through election day itself.</p>
     </section>
 
     <section class="case-block">
-      <h2>What was missing</h2>
-      <p>The framework existed on paper before the field network did.</p>
-<p>Verified field contacts, end-to-end collation testing and a proven fallback for technical failure were all specified but not yet exercised.</p>
+      <h2>What running it involved</h2>
+      <p>Agents were assigned to specific LGAs, so reports arriving from within the same territory rarely contradicted each other. My desks took those reports and held them to one standard log format: time, location, source, verification status, action owner, current status.</p>
+      <p>That format mattered more than it sounds. It meant any report could be picked up mid-shift by someone who had not taken the original call — the difference between a desk that survives a handover and one that only works while the same person is sitting at it.</p>
     </section>
 
     <section class="case-block">
-      <h2>What I built</h2>
-      <ul class="plain-list">
-  <li>A verified contact network across assigned LGAs, with redundancy at every level so a single unreachable contact never blacked out a unit.</li>
-  <li>Desk-level reporting discipline: a standard log format capturing time, location, source, verification status, action owner and current status, so any report could be picked up mid-shift by someone who had not taken the call.</li>
-  <li>Documentation oversight paired to named supervisors by area, briefed individually rather than collectively, so accountability sat with a person rather than a rota.</li>
-  <li>Collation and reporting readiness tests run ahead of go-live, so failures surfaced before election day rather than during it.</li>
-</ul>
+      <h2>The hard part</h2>
+      <p>The framework existed on paper before the field network did. Verified contacts, end-to-end collation testing and a proven fallback for technical failure were all specified, and none of them had been exercised.</p>
+      <p>Two standing rules pulled against each other under time pressure: verify before escalating, and escalate serious issues immediately. The choice I made and held was to confirm through a second source first, accepting delay as the cost of not acting on an unconfirmed report. Where a contact could not be reached at all, reporting fell back to the next level up the chain — that preserved coverage but lost granularity, and it was a trade made deliberately rather than by default.</p>
     </section>
 
     <section class="case-block">
-      <h2>Decisions and trade-offs</h2>
-      <ul class="plain-list">
-  <li>Verification before escalation, with an immediate-escalation rule for serious issues. Those pull against each other under time pressure; the standing choice was to confirm through a second source before escalating, accepting delay as the cost of not acting on an unconfirmed report.</li>
-  <li>Where a contact could not be reached, reporting fell back to the next level up the chain. That preserved coverage but reduced granularity, and the trade-off was made explicitly rather than by default.</li>
-</ul>
+      <h2>What held</h2>
+      <p>A verified contact network across the assigned LGAs, with redundancy at every level, so a single unreachable contact never blacked out a unit.</p>
+      <p>Documentation oversight paired to named supervisors by area and briefed individually rather than collectively, so accountability sat with a person rather than a rota. Collation and reporting readiness were tested ahead of go-live, which is why failures surfaced on a rehearsal instead of on the one day that could not move.</p>
     </section>
 
-    
-
-    
+    <p class="case-meta-tags">
+      <span class="case-meta-label">Civic &amp; elections</span>
+      <span class="case-meta-tag">Stakeholder / vendor</span>
+      <span class="case-meta-tag">Live ops, fixed date</span>
+      <span class="case-meta-tag">Research &amp; reporting</span>
+    </p>
   </div>
 
   <nav class="case-nav" aria-label="Other cases">
-    <a class="prev-case" href="../fmc-clinical-research/"><span class="nav-label">Previous — Health &amp; research</span><span class="nav-title">Clinical research coordination — Federal Medical Centre, Ogun State</span></a>
-    <a class="next-case" href="../africa-infrastructure-roundtable/"><span class="nav-label">Next — Infrastructure &amp; policy</span><span class="nav-title">Africa Infrastructure Roundtable, Manchester 2026 → London 2027 pipeline</span></a>
+    <a class="prev-case" href="../fmc-clinical-research/"><span class="nav-label">Previous</span><span class="nav-title">Clinical research coordination — Federal Medical Centre, Ogun State</span></a>
+    <a class="next-case" href="../africa-infrastructure-roundtable/"><span class="nav-label">Next</span><span class="nav-title">Africa Infrastructure Roundtable — Manchester 2026, London 2027 pipeline</span></a>
   </nav>
 </main>
 

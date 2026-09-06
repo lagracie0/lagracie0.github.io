@@ -53,6 +53,31 @@ a { color: inherit; }
   border-bottom: var(--border-width) solid var(--border-color);
 }
 
+/* Reserve the taller (wrapped) header height in the narrow band where the
+   two font states disagree. Measured on every page: between 375px and
+   ~499px the mono nav links fit on ONE line in the metric-matched
+   fallback but wrap to TWO once real JetBrains Mono loads, making the
+   header jump 53.2px -> 85.2px and shoving the entire page down 32px.
+   That was a deterministic CLS of ~0.19 on every page at mobile width,
+   reproducing identically across three separate case pages — not a race
+   and not page-specific. Below 321px both states already wrap (so this
+   is a no-op there); at 500px and up neither does, so the reservation is
+   scoped out entirely rather than leaving dead space on desktop. It's a
+   floor, not a fixed height: the header can still grow if content
+   changes, it just can't grow *after first paint*. Re-measure if the nav
+   gains or loses an item. */
+@media (max-width: 499px) {
+  .site-header {
+    min-height: 86px;
+    /* align-content, not the default centring: with a reserved box the
+       flex lines would otherwise re-centre vertically when the wrap state
+       changes, so the nav still moved — by half the delta instead of all
+       of it. Pinning the lines to the top makes the reservation actually
+       hold everything still. */
+    align-content: flex-start;
+  }
+}
+
 .site-header .wordmark {
   font-family: var(--font-display);
   font-weight: var(--weight-display);

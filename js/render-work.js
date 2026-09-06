@@ -1,25 +1,21 @@
-import { DOMAINS, CAPABILITIES, CASES } from '../data/cases.js';
-import { displayLabel, displayDateRange, isNeedsInput } from './case-utils.js';
+import { DOMAINS, CAPABILITIES, LISTED_CASES } from '../data/cases.js';
+import { displayLabel, displayDateRange } from './case-utils.js';
 
 const domainBySlug = new Map(DOMAINS.map((d) => [d.slug, d]));
 const capabilityBySlug = new Map(CAPABILITIES.map((c) => [c.slug, c]));
 
-// P0 first, then most recent first. "Recent" uses dateEnd if it's real,
-// falling back to dateStart, falling back to last (cases with no real date
-// at all sort to the bottom of their priority tier, not scattered through
-// it). Date strings compare fine lexicographically even at mixed precision
-// (year-only vs. year-month-day) for this purpose — exact day-level
-// ordering isn't the point, keeping P0 work up front and dated work ahead
-// of undated work is.
+// Most recent first — PRD v2 dropped v1's P0/P1 launch-list distinction,
+// so recency is the whole ordering. "Recent" uses dateEnd, falling back
+// to dateStart, falling back to last. Date strings compare fine
+// lexicographically even at mixed precision (year-only vs year-month-day)
+// for this purpose: exact day-level ordering isn't the point, keeping
+// dated work ahead of undated work is.
 function recencyKey(caseObj) {
-  const end = isNeedsInput(caseObj.dateEnd) ? null : caseObj.dateEnd;
-  const start = isNeedsInput(caseObj.dateStart) ? null : caseObj.dateStart;
-  return end || start || null;
+  return caseObj.dateEnd || caseObj.dateStart || null;
 }
 
 function orderForWork(cases) {
   return [...cases].sort((a, b) => {
-    if (a.priority !== b.priority) return a.priority === 'P0' ? -1 : 1;
     const ka = recencyKey(a);
     const kb = recencyKey(b);
     if (ka === null && kb === null) return 0;
@@ -62,7 +58,7 @@ function writeStateToUrl(state, replace) {
 }
 
 function matchingCases(state) {
-  return orderForWork(CASES.filter((c) =>
+  return orderForWork(LISTED_CASES.filter((c) =>
     (!state.domain || c.domain === state.domain) &&
     (!state.capability || c.capabilities.includes(state.capability))
   ));
@@ -183,13 +179,13 @@ function init() {
     if (matches.length === 0) {
       const parts = [];
       if (state.domain && state.capability) {
-        const domainMatches = CASES.filter((c) => c.domain === state.domain).map((c) => capabilityBySlug.get(c.capabilities[0])?.label);
-        const capMatches = DOMAINS.filter((d) => CASES.some((c) => c.domain === d.slug && c.capabilities.includes(state.capability)));
+        const domainMatches = LISTED_CASES.filter((c) => c.domain === state.domain).map((c) => capabilityBySlug.get(c.capabilities[0])?.label);
+        const capMatches = DOMAINS.filter((d) => LISTED_CASES.some((c) => c.domain === d.slug && c.capabilities.includes(state.capability)));
         parts.push(el('p', { text: `No case combines ${domainBySlug.get(state.domain).label} with ${capabilityBySlug.get(state.capability).label}.` }));
         if (capMatches.length) {
           parts.push(el('p', { class: 'adjacent-list', text: `${capabilityBySlug.get(state.capability).label} shows up in: ${capMatches.map((d) => d.label).join(', ')}.` }));
         }
-        const domainCaps = [...new Set(CASES.filter((c) => c.domain === state.domain).flatMap((c) => c.capabilities))];
+        const domainCaps = [...new Set(LISTED_CASES.filter((c) => c.domain === state.domain).flatMap((c) => c.capabilities))];
         if (domainCaps.length) {
           parts.push(el('p', { class: 'adjacent-list', text: `${domainBySlug.get(state.domain).label} covers: ${domainCaps.map((s) => capabilityBySlug.get(s).label).join(', ')}.` }));
         }

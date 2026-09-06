@@ -1,32 +1,38 @@
-/* Case page layout. Shares css/tokens.css, the header/footer patterns, and
-   the pastel accent tokens (--pastel-blue etc.) from css/home.css (linked
-   separately by the generated page) — this is the landing page's visual
-   system, not a second one, since this is the page a visitor actually
-   reads. Owns its own six-block narrative layout, RAG outcome badges, and
-   the loud NEEDS-INPUT flagging that keeps placeholder content from ever
-   being mistaken for real copy — none of that changes here: RAG stays
-   reserved for status only, and .needs-input/.draft-banner stay exactly
-   as loud as before (see their rules further down). */
+/* Case page layout. Shares css/tokens.css, the header/footer patterns and
+   the pastel accent tokens from css/home.css (linked separately by the
+   generated page).
+
+   PRD v2 §7: this is the page a visitor actually reads, so it gets a real
+   reading layout — generous measure, clear hierarchy, serif at a
+   comfortable size — rather than the dense grid treatment v1 used.
+
+   Gone with the v1 six-block schema, because the generator no longer
+   emits any of them: RAG outcome badges (colour now keys to engagement
+   type, not status), .needs-input and .draft-banner (a case is written or
+   it isn't listed — nothing provisional renders publicly any more),
+   .metric, .outcome-item, .artifact-list and .plain-list. */
 
 .case-header {
-  padding: var(--space-6) var(--space-5) var(--space-5);
+  padding: var(--space-7) var(--space-5) var(--space-6);
   border-bottom: var(--border-width) solid var(--border-color);
 }
 
-.case-header .case-domain {
+/* Engagement type, not domain — PRD v2 groups and colours by the kind of
+   work an engagement was. The per-type hue keys off body[data-template]
+   and lands in phase 2; this is the shared shape it will use. */
+.case-header .case-type {
   font-family: var(--font-mono);
   font-size: var(--text-mono-label);
-  /* Explicit, not "normal" — an inline-block mono element with its own
-     border-bottom otherwise takes its box height from the active font's
-     line-height, which still differs by a couple of px between JetBrains
-     Mono and its fallback even with size-adjust calibrated (same bug
-     .credentials .credential in home.css was fixed for previously; this
-     is a fresh instance of it, not a new bug class). */
+  /* Explicit, not "normal": an inline-block mono element with its own
+     border-bottom otherwise takes its height from the active font's
+     line-height, which differs by ~2px between JetBrains Mono and its
+     fallback even with size-adjust calibrated. Same fix as
+     .credentials .credential in home.css. */
   line-height: 1.25rem;
   text-transform: uppercase;
   letter-spacing: var(--tracking-mono-label);
   color: var(--blue-deep);
-  margin: 0 0 var(--space-3);
+  margin: 0 0 var(--space-4);
   padding-bottom: var(--space-2);
   border-bottom: 3px solid var(--pastel-blue);
   display: inline-block;
@@ -37,47 +43,44 @@
   font-weight: var(--weight-display);
   font-size: var(--text-display-2);
   line-height: var(--leading-display-2);
-  margin: 0 0 var(--space-3);
+  letter-spacing: var(--tracking-display-2);
+  margin: 0 0 var(--space-4);
+  max-width: 22ch;
   text-wrap: balance;
 }
 
-.case-header .entity-line,
-.case-header .byline {
+.case-header .entity-line {
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: 1.05rem;
-  /* Explicit, not "normal" — same italic Source Serif 4 line-height gap
-     as .page-header .page-dek in page.css. */
-  line-height: var(--leading-body-lead);
+  font-size: 1.1rem;
+  line-height: 1.5;
   color: var(--color-ink);
-  margin: 0 0 var(--space-4);
-}
-
-.case-header .card-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  list-style: none;
   margin: 0;
-  padding: 0;
-}
-.case-header .card-tags li {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  /* Explicit, not "normal" — same reasoning as every other line-height
-     added in this pass. */
-  line-height: 1.2rem;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono-label);
-  padding: 3px var(--space-2);
-  background: var(--pastel-blue-tint);
-  color: var(--blue-deep);
+  max-width: 60ch;
 }
 
+/* Template A's date/scale line, Template B's stack/team-shape line.
+   Omitted entirely rather than invented where the CV doesn't say. */
+.case-header .case-context {
+  font-family: var(--font-mono);
+  font-size: var(--text-mono-label);
+  line-height: 1.6;
+  letter-spacing: var(--tracking-mono-label);
+  color: var(--color-line);
+  margin: var(--space-4) 0 0;
+}
+
+/* ---- Reading column ---- */
+
+/* Left-aligned, not centred: the header, /work, /about and the landing
+   page all hang off the same left edge, and a centred reading column here
+   alone would give the site a second column axis — exactly the "two
+   different sites" problem PRD v2 §1 is fixing. The measure is controlled
+   by max-width on the prose itself instead. */
 .case-body {
-  max-width: var(--measure-body);
-  padding: var(--space-6) var(--space-5);
-  margin: 0 auto;
+  max-width: 68ch;
+  padding: var(--space-7) var(--space-5) var(--space-6);
+  margin: 0;
 }
 
 .case-block {
@@ -87,178 +90,101 @@
 .case-block h2 {
   font-family: var(--font-mono);
   font-size: var(--text-mono-label);
-  /* See .case-header .case-domain above for why this is explicit. */
   line-height: 1.25rem;
   text-transform: uppercase;
   letter-spacing: var(--tracking-mono-label);
   color: var(--blue-deep);
   border-bottom: 3px solid var(--pastel-blue);
   padding-bottom: var(--space-2);
+  margin: 0 0 var(--space-5);
+  display: inline-block;
+}
+
+.case-block p {
+  font-family: var(--font-serif);
+  font-size: 1.1875rem;
+  line-height: 1.7;
   margin: 0 0 var(--space-4);
-  display: inline-block;
 }
+.case-block p:last-child { margin-bottom: 0; }
 
-.case-block p,
-.case-block li {
-  font-family: var(--font-serif);
-  font-size: var(--text-body);
-  line-height: var(--leading-body);
-  margin: 0 0 var(--space-3);
-}
-
-.case-block ul.plain-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.case-block ul.plain-list li {
-  padding-left: var(--space-5);
-  position: relative;
-}
-.case-block ul.plain-list li::before {
-  content: '—';
-  position: absolute;
-  left: 2px;
-  color: var(--color-line);
-}
-
-/* Outcome entries: text + RAG badge, same badge treatment as the matrix
-   specimen — colour never carries meaning alone (N5), always paired with
-   the uppercase text label. */
-.outcome-item {
+/* Capability tags demoted to metadata at the foot of the piece — PRD v2
+   §7 (v1's F4: the taxonomy had become the interface). Not in the header,
+   not competing with the title, not the first thing anyone reads. */
+.case-meta-tags {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: var(--space-2);
-  margin-bottom: var(--space-4);
-  padding-bottom: var(--space-4);
-  border-bottom: var(--border-width) dotted var(--color-line);
-}
-.outcome-item:last-child { border-bottom: none; }
-
-.rag-badge {
-  display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
-  font-family: var(--font-mono);
-  font-weight: var(--weight-mono-bold);
-  font-size: var(--text-mono-label);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono-label);
-  color: var(--color-white);
-  width: fit-content;
-}
-.rag-badge.green { background: var(--color-green); }
-.rag-badge.amber { background: var(--color-amber); }
-.rag-badge.red { background: var(--color-red); }
-.rag-badge.unknown {
-  background: transparent;
-  color: var(--color-line);
-  border: var(--border-width) dashed var(--color-line);
+  margin: var(--space-8) 0 0;
+  padding-top: var(--space-4);
+  border-top: var(--border-width) solid var(--border-color);
 }
 
-/* Metrics: value + label + a mandatory method note, per R2 — never a bare
-   percentage. */
-.metric {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--space-1) var(--space-4);
-  margin-bottom: var(--space-4);
-}
-.metric .metric-value {
+.case-meta-label,
+.case-meta-tag {
   font-family: var(--font-mono);
-  font-weight: var(--weight-mono-bold);
-  font-size: 1.5rem;
-  font-variant-numeric: tabular-nums;
+  font-size: 0.68rem;
+  line-height: 1rem;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-mono-label);
+  padding: 3px var(--space-2);
+}
+
+.case-meta-label {
+  background: var(--pastel-blue-tint);
   color: var(--blue-deep);
-  grid-row: 1 / 3;
-  align-self: start;
 }
-.metric .metric-label {
-  font-family: var(--font-serif);
-  font-size: var(--text-body);
-}
-.metric .metric-method {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
+
+.case-meta-tag {
   color: var(--color-line);
-  grid-column: 2;
 }
 
-/* NEEDS-INPUT: loud, unmissable, never confusable with real copy. This is a
-   dev/review affordance, not a design choice for shipped content — a P0
-   case with any of these present is refused by the build script entirely
-   (see scripts/build-case-pages.mjs), so this only ever appears on P1
-   pages that are explicitly still drafts. */
-.needs-input {
-  display: inline-block;
-  background: #FFF3B0;
-  color: #7A1F00;
-  border: 2px dashed #C0392B;
-  font-family: var(--font-mono);
-  font-size: 0.85em;
-  font-weight: var(--weight-mono-bold);
-  padding: 2px 8px;
-  margin: 2px 0;
-}
-.needs-input::before {
-  content: '⚑ NEEDS INPUT — ';
-  font-weight: var(--weight-mono-bold);
-}
-
-.draft-banner {
-  background: #FFF3B0;
-  color: #7A1F00;
-  border-bottom: 3px dashed #C0392B;
-  padding: var(--space-3) var(--space-5);
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  font-weight: var(--weight-mono-bold);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-mono-label);
-  text-align: center;
-}
-
-.artifact-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-.artifact-list li {
-  background: var(--pastel-lavender-tint);
-  padding: var(--space-4);
-  font-family: var(--font-serif);
-  font-size: 0.95rem;
-}
+/* ---- Previous / next ---- */
 
 .case-nav {
   display: flex;
   justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-5);
+  gap: var(--space-5);
+  padding: var(--space-6) var(--space-5) var(--space-7);
   border-top: var(--border-width) solid var(--border-color);
   flex-wrap: wrap;
 }
+
 .case-nav a {
   text-decoration: none;
   color: var(--color-ink);
   max-width: 45%;
 }
-.case-nav a:hover .nav-label { color: var(--lavender-deep); }
+.case-nav a:hover .nav-title { opacity: 0.7; }
+
 .case-nav .nav-label {
   display: block;
   font-family: var(--font-mono);
   font-size: var(--text-mono-label);
+  line-height: 1.25rem;
   text-transform: uppercase;
   letter-spacing: var(--tracking-mono-label);
-  color: var(--color-line);
+  color: var(--lavender-deep);
   margin-bottom: var(--space-1);
 }
+
 .case-nav .nav-title {
   font-family: var(--font-serif);
-  font-size: 1rem;
+  font-size: 1.05rem;
+  line-height: 1.4;
 }
+
 .case-nav .next-case { text-align: right; margin-left: auto; }
+
+@media (min-width: 768px) {
+  .case-header {
+    padding: var(--space-8) var(--space-6) var(--space-6);
+  }
+  .case-body {
+    padding: var(--space-8) var(--space-6) var(--space-7);
+  }
+  .case-nav {
+    padding: var(--space-6) var(--space-6) var(--space-8);
+  }
+}

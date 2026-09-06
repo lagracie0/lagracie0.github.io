@@ -1,37 +1,30 @@
-// Single source of truth for the Coverage Matrix, /work filters, and case pages.
-// Adding an 11th case = adding one object here. Do not touch layout code.
-//
-// NEEDS-INPUT convention: any field the WRD doesn't state explicitly, and that
-// isn't in the CV text we have, is filled with the literal string
-// '[NEEDS INPUT: <question>]' rather than an invented sentence. See WRD R1.
+// Single source of truth for /work, the case pages, and the home page's
+// featured cases. PRD v2 (docs/PRD.md) replaced the v1 six-block schema
+// with four adaptive templates — see TEMPLATES below.
 //
 // Shape notes:
-// - domain/capabilities are kebab-case ids that must match a slug in DOMAINS /
-//   CAPABILITIES below — F5's URL params depend on this.
-// - outcome[] holds narrative outcome statements, each tagged with its own
-//   RAG status ({ text, status }) — one case can be green on one thread and
-//   amber on another; there is no single case-level status.
-// - metrics[] holds quantified claims ({ value, label, method }). `method` is
-//   required on every entry (WRD R2) so it can never be skipped — cases with
-//   no headline number in the WRD have an empty metrics[] array rather than
-//   an invented one.
-// - priority is 'P0' | 'P1' per WRD §6.1, so the Phase 1 ship list is a filter
-//   on this field, not a manual call at build time.
-// - entityLine is an optional, explicit byline ("role, entity, context —
-//   dates") for a case where the engaging entity needs to be stated with
-//   precision distinct from `org` alone. Currently only on C1: the
-//   engagement was with the Accord Party specifically, not the Osun State
-//   Government, even though the party holds the governorship the case is
-//   about — that distinction matters enough to spell out, not leave to `org`.
-// - situation[] and missing[] hold one entry per sentence/claim (matching the
-//   pattern built[]/decisions[]/outcome[] already use), not one long string —
-//   so a real, traceable sentence and an open [NEEDS INPUT] question can sit
-//   side by side in the same block without one contaminating the other. Only
-//   C1 and C3 use this shape so far (see the Step 4/5 review); the rest are
-//   still single-entry placeholders pending their own discovery pass.
-// - Every [NEEDS INPUT: ...] string IS the open question, not prose with a
-//   question attached — never write a real-sounding sentence and footnote
-//   it. A field is either fully traceable (state it) or fully open (ask it).
+// - `template` is 'A' | 'B' | 'C' | 'D' and decides which headings a case
+//   uses. scripts/build-case-pages.mjs validates that a listed case's
+//   section headings match its template exactly, so a case can't quietly
+//   drift into a shape nothing else on the site expects.
+// - `sections` is ordered: [{ heading, body: [paragraph, ...] }]. Prose,
+//   first person, past tense. Every section is written or the case isn't
+//   listed — there is no partial state and no placeholder rendering.
+// - `listed: false` marks a case that exists but has no writable content
+//   yet. It is skipped entirely: no page, no card, no link. PRD v2 §5:
+//   "A case is either written or it is not listed." No draft banners, no
+//   [NEEDS INPUT] markers in production.
+// - `metrics` entries are { value, label, method? }. `method` is now
+//   OPTIONAL (v1 made it mandatory): PRD v2 §5 says a number carries a
+//   method note where the method is known, and where it isn't the number
+//   appears without a spurious one. These are not rendered on case pages
+//   — the numbers already appear inside the prose — they're kept for the
+//   stats block contemplated in PRD §12 Q4.
+// - `scaleLine` (Template A) and `contextLine` (Template B) are the
+//   "date and scale" / "stack and team shape" lines those two templates
+//   call for. Both omitted rather than invented where the CV doesn't say.
+// - No invented facts. Every sentence traces to the CV, to Ayomide's own
+//   written input, or to the confidentiality-cleared C1 content.
 
 export const DOMAINS = [
   { slug: 'civic', label: 'Civic & elections' },
@@ -44,12 +37,8 @@ export const DOMAINS = [
   { slug: 'health-research', label: 'Health & research' },
 ];
 
-// Order is semantic, not alphabetical or packing-optimised: it traces the
-// arc of an engagement — arrive/scope, build the structure, deliver, run it
-// live under a fixed date, report, ship it yourself. Stakeholder sits second
-// because alignment has to precede execution, not because it minimises
-// segmented bars in the matrix. This order is load-bearing for the Coverage
-// Matrix's column sequence — do not reorder for layout convenience.
+// Kept as metadata. PRD v2 §7 demotes these below the title on cards
+// rather than letting the taxonomy be the interface (v1's F4).
 export const CAPABILITIES = [
   { slug: 'build-from-zero', label: 'Build from zero' },
   { slug: 'stakeholder', label: 'Stakeholder / vendor' },
@@ -59,474 +48,529 @@ export const CAPABILITIES = [
   { slug: 'ships-it-herself', label: 'Ships it myself' },
 ];
 
+// The four engagement types. `headings` is the exact, ordered set a case
+// of that template must use — the build script enforces it. `label` is
+// what a visitor sees when work is grouped by type (PRD v2 §4: grouped
+// by type rather than filtered by taxonomy).
+export const TEMPLATES = {
+  A: {
+    label: 'Live operation',
+    blurb: 'Fixed date, no slip.',
+    headings: ['The brief', 'What running it involved', 'The hard part', 'What held'],
+  },
+  B: {
+    label: 'Product delivery',
+    blurb: 'Scoping through release and past it.',
+    headings: ['The product', 'Where I came in', 'How delivery ran', 'What shipped'],
+  },
+  C: {
+    label: 'Built from nothing',
+    blurb: 'No prior structure to inherit.',
+    headings: ['What didn\'t exist', 'What I built', 'How it works now', 'Where it got to'],
+  },
+  D: {
+    label: 'Ongoing function',
+    blurb: 'A standing role, not a project.',
+    headings: ['The role', 'The work', 'What changed because of it'],
+  },
+};
+
+// Read LISTED_CASES, not CASES, anywhere the site renders links or cards
+// — an unlisted case has no generated page, so linking to one produces a
+// 404. CASES stays exported for the build scripts that need to report on
+// what is unlisted and why. Defined below the array.
+
 export const CASES = [
   {
     slug: 'situation-room-osun-election',
     title: 'Situation Room supervision — Osun governorship election',
     org: 'Accord Party',
     // The engaging entity is the Accord Party, not the Osun State
-    // Government — the party holds the governorship, but the engagement
-    // itself was with the party. Never name the state government as
-    // employer here, in prose, or in JSON-LD/OG tags later.
+    // Government. Never name the state government as employer here or in
+    // metadata.
     entityLine: 'Supervisor, Situation Room, Accord Party — Osun State governorship election, 20 July to 15 August 2026.',
+    template: 'A',
     domain: 'civic',
-    // build-from-zero removed and research added, per Ayomide's explicit
-    // ruling: the command structure, escalation ladder and log fields were
-    // set by the Situation Room Lead before supervisors took over, so
-    // build-from-zero would claim design work that belongs to someone
-    // else — the same documents that would prove that also disprove the
-    // tag. research is added because collation-readiness testing and the
-    // standing reporting cadence to the Lead both support it. This flips
-    // the WRD/data mismatch on this domain: Civic x Research is now
-    // resolved (matches WRD §4.1), but Civic x Build-from-zero is now open
-    // again, since Civic has only this one case and it no longer carries
-    // that tag — see tasks/todo.md. If built[4] below comes back with a
-    // real structural contribution she made beyond the briefing, that
-    // could reopen the build-from-zero question; until then, it stays off.
     capabilities: ['stakeholder', 'live-ops', 'research'],
-    priority: 'P0',
     dateStart: '2026-07-20',
     dateEnd: '2026-08-15',
-    // Deliberately reduced for confidentiality, per instruction. This is
-    // not a discovery gap — do not restore prior detail (media/security/
-    // standby-support escalation, named individuals, or how escalation to
-    // security worked) and do not expand this back out. This is the final
-    // public version of this content, not a draft awaiting more detail.
-    situation: [
-      'The Situation Room ran as a designed operation with a defined command structure, a fixed reporting chain from the field to the desk, and a severity classification applied to every issue raised.',
-      'Agents were assigned to specific LGAs, so reports from within the same territory rarely conflicted.',
-      'I supervised a cluster of LGA desks inside that structure across a four-week run-up and through election day.',
+    // Deliberately reduced for confidentiality and cleared at that level.
+    // Do not restore detail from earlier drafts: no named individuals, no
+    // escalation-path specifics, no network detail, no political framing.
+    // PRD v2 §5 keeps this rule unchanged from v1.
+    scaleLine: '20 July – 15 August 2026 · A cluster of LGA desks · Osun State',
+    sections: [
+      {
+        heading: 'The brief',
+        body: [
+          'The Accord Party ran a Situation Room for the Osun State governorship election — a designed operation with a defined command structure, a fixed reporting chain from the field to the desk, and a severity classification applied to every issue raised. I supervised a cluster of LGA desks inside that structure, across a four-week run-up and through election day itself.',
+        ],
+      },
+      {
+        heading: 'What running it involved',
+        body: [
+          'Agents were assigned to specific LGAs, so reports arriving from within the same territory rarely contradicted each other. My desks took those reports and held them to one standard log format: time, location, source, verification status, action owner, current status.',
+          'That format mattered more than it sounds. It meant any report could be picked up mid-shift by someone who had not taken the original call — the difference between a desk that survives a handover and one that only works while the same person is sitting at it.',
+        ],
+      },
+      {
+        heading: 'The hard part',
+        body: [
+          'The framework existed on paper before the field network did. Verified contacts, end-to-end collation testing and a proven fallback for technical failure were all specified, and none of them had been exercised.',
+          'Two standing rules pulled against each other under time pressure: verify before escalating, and escalate serious issues immediately. The choice I made and held was to confirm through a second source first, accepting delay as the cost of not acting on an unconfirmed report. Where a contact could not be reached at all, reporting fell back to the next level up the chain — that preserved coverage but lost granularity, and it was a trade made deliberately rather than by default.',
+        ],
+      },
+      {
+        heading: 'What held',
+        body: [
+          'A verified contact network across the assigned LGAs, with redundancy at every level, so a single unreachable contact never blacked out a unit.',
+          'Documentation oversight paired to named supervisors by area and briefed individually rather than collectively, so accountability sat with a person rather than a rota. Collation and reporting readiness were tested ahead of go-live, which is why failures surfaced on a rehearsal instead of on the one day that could not move.',
+        ],
+      },
     ],
-    missing: [
-      'The framework existed on paper before the field network did.',
-      'Verified field contacts, end-to-end collation testing and a proven fallback for technical failure were all specified but not yet exercised.',
-    ],
-    built: [
-      'A verified contact network across assigned LGAs, with redundancy at every level so a single unreachable contact never blacked out a unit.',
-      'Desk-level reporting discipline: a standard log format capturing time, location, source, verification status, action owner and current status, so any report could be picked up mid-shift by someone who had not taken the call.',
-      'Documentation oversight paired to named supervisors by area, briefed individually rather than collectively, so accountability sat with a person rather than a rota.',
-      'Collation and reporting readiness tests run ahead of go-live, so failures surfaced before election day rather than during it.',
-    ],
-    decisions: [
-      'Verification before escalation, with an immediate-escalation rule for serious issues. Those pull against each other under time pressure; the standing choice was to confirm through a second source before escalating, accepting delay as the cost of not acting on an unconfirmed report.',
-      'Where a contact could not be reached, reporting fell back to the next level up the chain. That preserved coverage but reduced granularity, and the trade-off was made explicitly rather than by default.',
-    ],
-    outcome: [],
     metrics: [],
-    artifacts: [],
   },
+
   {
     slug: 'africa-infrastructure-roundtable',
-    title: 'Africa Infrastructure Roundtable, Manchester 2026 → London 2027 pipeline',
+    title: 'Africa Infrastructure Roundtable — Manchester 2026, London 2027 pipeline',
     org: 'Langovest',
+    template: 'A',
     domain: 'infrastructure',
     capabilities: ['delivery', 'stakeholder', 'live-ops'],
-    priority: 'P0',
-    // Corrected against the CV: her Langovest role ("Project Manager and
-    // Coordinator") ran March 2026 - August 2026 — that's the actual
-    // engagement period, and what these dates now represent. "London 2027"
-    // in the title is the pipeline's target date, which she scoped and
-    // built during this window — it isn't when her employment ran, and the
-    // two shouldn't be conflated just because the title names both years.
     dateStart: '2026-03',
     dateEnd: '2026-08',
-    situation: [
-      'I managed the Africa Infrastructure Roundtable\'s Manchester Edition end-to-end across UK and Nigeria stakeholders, as part of my Project Manager and Coordinator role at Langovest.',
-    ],
-    missing: [
-      // Direct entailment of the CV's own verbs ("scoped and built the...
-      // pipeline") — you don't scope and build a framework that already
-      // exists. Not an inference beyond what the CV states about this
-      // specific piece of the engagement.
-      'The London 2027 Edition had no engagement framework yet — that needed to be scoped and built following the Manchester Edition.',
-    ],
-    built: [
-      'Managed the Manchester Edition end-to-end across UK and Nigeria stakeholders, then scoped and built the London 2027 Edition\'s pipeline around a five-university engagement framework covering UCL, Imperial College London, Brunel, SOAS and UniLAG.',
-    ],
-    decisions: [
-      '[NEEDS INPUT: 2–3 real decision forks and what was traded off]',
-    ],
-    outcome: [
-      { text: '[NEEDS INPUT: outcome statement]', status: '[NEEDS INPUT: green/amber/red]' },
+    scaleLine: 'Manchester 2026 edition · London 2027 pipeline · UK and Nigeria stakeholders',
+    // Prose below is Ayomide's own, from PRD v2 §6, where it is given as
+    // the worked example of the writing standard. Kept as written.
+    sections: [
+      {
+        heading: 'The brief',
+        body: [
+          'Langovest runs the Africa Infrastructure Roundtable, a convening that brings African infrastructure investors and institutions into the same room as UK universities and capital. I ran the Manchester 2026 edition end to end, and then built the pipeline for London 2027.',
+        ],
+      },
+      {
+        heading: 'What running it involved',
+        body: [
+          'Stakeholders sat on two continents and worked to different calendars — Nigerian partners and UK institutions, neither of whom could be kept waiting on the other. I owned the delivery schedule across both, which meant the programme, the speakers, the partner commitments and the run of the day itself all had to converge on a date that could not move.',
+        ],
+      },
+      {
+        heading: 'The hard part',
+        body: [
+          'Manchester was the deliverable; London was the harder problem, because it didn\'t exist yet. I scoped the 2027 edition around a five-university engagement framework — UCL, Imperial College London, Brunel, SOAS and the University of Lagos — which meant turning a list of desirable institutions into a sequenced outreach pipeline with owners and dates, before there was an event to invite them to.',
+        ],
+      },
+      {
+        heading: 'What held',
+        body: [
+          'Manchester ran. The London framework exists as a working pipeline rather than an ambition, and the five-university structure is what the 2027 edition is being built on.',
+        ],
+      },
     ],
     metrics: [],
-    artifacts: [
-      '[NEEDS INPUT: a redacted/reconstructed artifact — e.g. stakeholder map, run-of-show]',
-    ],
   },
-  {
-    slug: 'lodgr-booking-platform',
-    title: 'Lodgr — booking platform, scoping to post-launch review',
-    org: 'Lodgr', // resolved: the CV names it directly, same pattern as Boldtron/Calnita
-    domain: 'hospitality',
-    capabilities: ['build-from-zero', 'delivery', 'research'],
-    priority: 'P0',
-    // Corrected against the CV: this ran during her "Independent Project
-    // Manager (Contract), Remote, EMEA" period, September 2025 - March
-    // 2026. The CV doesn't say which weeks within that window belonged to
-    // Lodgr specifically (she ran Lodgr, Boldtron, and other engagements
-    // concurrently in this role), so these are the real bounding dates, not
-    // a precise start/end for this engagement alone.
-    dateStart: '2025-09',
-    dateEnd: '2026-03',
-    situation: [
-      'Lodgr was an apartment and hotel booking platform I took on during my Independent Project Manager contract (remote, EMEA) — the work began at scoping, turning booking, availability and payment requirements into user stories and sprint plans for the engineering team.',
-      '[NEEDS INPUT: did Lodgr already have a product built before this engagement — a concept, a prototype, paying customers — or was this a zero-to-one build, and roughly how large was the team?]',
-    ],
-    missing: [
-      // CV states this generally for the contract's clients, not Lodgr by
-      // name specifically — but Lodgr is a named engagement inside that
-      // same contract period, so this applies directly, not by inference.
-      'There was no existing project management function at Lodgr before this engagement — no project plans, schedules, resource allocations, risk registers or change-request handling.',
-    ],
-    built: [
-      'Took Lodgr from scoping through release and post-launch review, turning booking, availability and payment requirements into user stories and sprint plans for the engineering team.',
-      'Introduced the project plans, schedules, resource allocations, risk registers and change-request handling Lodgr didn\'t have before, and set the reporting sequence that kept the team and stakeholders aligned.',
-      '[NEEDS INPUT: what research did I conduct for Lodgr specifically, and what method — user interviews, competitive analysis, usability testing?]',
-    ],
-    decisions: [
-      '[NEEDS INPUT: what was a real scope trade-off I made on Lodgr — a feature cut, a timeline compromise, a build-vs-buy call — and what was given up?]',
-      '[NEEDS INPUT: did I make a call between speed to launch and thoroughness of testing or research on Lodgr? What did that cost?]',
-      '[NEEDS INPUT: was there a disagreement with stakeholders or the team about direction on Lodgr, and how was it resolved?]',
-    ],
-    outcome: [
-      { text: '[NEEDS INPUT: what was the actual result of the launch — on time, delayed, and against what commitment?]', status: '[NEEDS INPUT: green/amber/red]' },
-      { text: '[NEEDS INPUT: what did the post-launch review find, and what happened as a result of it?]', status: '[NEEDS INPUT: green/amber/red]' },
-    ],
-    // No headline number for Lodgr specifically in the CV (the 95%/25%/15%
-    // figures all belong to other named engagements) — empty rather than
-    // an invented placeholder, per this file's own convention (see header).
-    metrics: [],
-    artifacts: [
-      '[NEEDS INPUT: a redacted/reconstructed requirements brief or scoping document from this engagement]',
-      '[NEEDS INPUT: a redacted/reconstructed launch checklist or post-launch review template]',
-    ],
-  },
-  {
-    slug: 'langovest-volunteer-network',
-    title: 'Langovest Volunteer Network',
-    org: 'Langovest',
-    domain: 'infrastructure',
-    capabilities: ['build-from-zero', 'stakeholder'],
-    priority: 'P0',
-    // Corrected against the CV: her Langovest role ran March 2026 - August
-    // 2026. The network reached 12 volunteers "within 4 months" per the CV,
-    // which fits inside this window but doesn't pin down which 4 months
-    // exactly — that precision is still unconfirmed.
-    dateStart: '2026-03',
-    dateEnd: '2026-08',
-    situation: [
-      'Before this, Langovest had no volunteer network — I was building the Langovest Volunteer Network from zero, as part of my Project Manager and Coordinator role.',
-    ],
-    missing: [
-      'There was no volunteer network, and no onboarding, application-response or coordination system to run one.',
-    ],
-    built: [
-      'Designed the onboarding, application-response and coordination systems that took the network to 12 active volunteers within 4 months, across the UK, Canada, Nigeria and a few other African countries.',
-    ],
-    decisions: [
-      '[NEEDS INPUT: 2–3 real decision forks and what was traded off]',
-    ],
-    // Framed green: the CV states this growth as an achieved result, not a
-    // recovery from a constraint or an open question — see the hard limit
-    // on decisions/metrics-method, which this outcome statement doesn't
-    // touch (it restates a number the CV already gives, nothing inferred).
-    outcome: [
-      { text: 'The network grew from 0 to 12 active volunteers within 4 months, across the UK, Canada, Nigeria and a few other African countries.', status: 'green' },
-    ],
-    metrics: [
-      { value: '0 → 12', label: 'active volunteers across 4 countries', method: '[NEEDS INPUT: how "volunteer" was counted — e.g. active vs. onboarded — and the exact 4-month window, per R2]' },
-    ],
-    artifacts: [
-      '[NEEDS INPUT: a redacted/reconstructed artifact — e.g. onboarding structure, country coordination map]',
-    ],
-  },
+
   {
     slug: 'osun-tech-festival',
-    title: 'Osun Tech Festival — full festival on a one-month lead time',
-    org: '[NEEDS INPUT: the organisation or client behind Osun Tech Festival]',
+    title: 'Osun Tech Festival — a full festival on a one-month lead time',
+    org: 'Osun Tech Festival',
+    template: 'A',
     domain: 'events',
     capabilities: ['live-ops', 'stakeholder'],
-    priority: 'P0',
     dateStart: '2026-02-19',
     dateEnd: '2026-02-20',
-    situation: [
-      'The Osun Tech Festival needed to reach delivery on 19–20 February 2026, on a single-month lead time.',
-    ],
-    missing: [
-      '[NEEDS INPUT: the specific structural absence]',
-    ],
-    built: [
-      'Owned speaker coordination, vendor contracts, venue logistics and volunteer deployment to bring the festival to delivery on that lead time, then ran the post-event programme through follow-up engagement and partner debriefs after it closed.',
-    ],
-    decisions: [
-      '[NEEDS INPUT: 2–3 real decision forks and what was traded off, given the one-month lead time]',
-    ],
-    // Green matches the RAG definition directly: delivered on the
-    // committed date. The CV states the festival reached delivery on the
-    // named dates against the named lead time — no inference beyond that.
-    outcome: [
-      { text: 'The festival was delivered as planned on 19–20 February 2026, on a single-month lead time.', status: 'green' },
+    scaleLine: '19–20 February 2026 · Single-month lead time · Speakers, vendors, venue and volunteers',
+    sections: [
+      {
+        heading: 'The brief',
+        body: [
+          'The Osun Tech Festival had a fixed date — 19 and 20 February 2026 — and roughly a month to reach it. I managed it to delivery on that lead time, which meant every part of it had to be owned at once rather than sequenced comfortably.',
+        ],
+      },
+      {
+        heading: 'What running it involved',
+        body: [
+          'Speaker coordination, vendor contracts, venue logistics and volunteer deployment all sat with me.',
+          'Those are four different kinds of work. One runs on other people\'s calendars, one is commercial and needs signatures, one is physical and tied to a place, and one is staffing a workforce where most people arrive for the first time on the day itself. On a single-month timeline none of them can wait politely for the others to finish.',
+        ],
+      },
+      {
+        heading: 'The hard part',
+        body: [
+          'A month is not enough time for anything to go wrong twice.',
+          'Speakers confirm late. Vendors want contracts signed before they will hold anything. The venue needs decisions that depend on the programme, and the programme depends on the speakers. That is a circular dependency with an immovable date at the end of it, and it only resolves by deciding what is good enough to commit to early instead of waiting for complete information.',
+        ],
+      },
+      {
+        heading: 'What held',
+        body: [
+          'The festival ran across both days as scheduled.',
+          'The work did not stop when the doors closed. I ran the post-event programme through follow-up engagement and partner debriefs after the festival ended — the part that decides whether an event was a one-off or the first edition of something.',
+        ],
+      },
     ],
     metrics: [],
-    artifacts: [
-      '[NEEDS INPUT: a redacted/reconstructed artifact — e.g. run-of-show sheet]',
-    ],
   },
+
   {
-    slug: 'langovest-website-redesign',
-    title: 'Langovest website redesign',
-    org: 'Langovest',
-    domain: 'devinfra',
-    capabilities: ['delivery', 'research'],
-    priority: 'P0',
-    dateStart: '2026-03', // corrected against the CV: her Langovest role's actual dates
-    dateEnd: '2026-08',
-    situation: [
-      'I ran the Langovest website redesign across design and engineering, as part of my Project Manager and Coordinator role.',
-    ],
-    missing: [
-      // Direct entailment: you can't "remove" ambiguity that wasn't there.
-      'Upstream project briefs weren\'t removing requirement ambiguity for the software team before this delivery structure was in place.',
-    ],
-    built: [
-      'Ran the delivery lifecycle in Trello, and structured upstream project briefs that removed requirement ambiguity for the software team, holding 95% of tickets to schedule.',
-    ],
-    decisions: [
-      '[NEEDS INPUT: 2–3 real decision forks and what was traded off]',
-    ],
-    outcome: [
-      { text: 'The redesign was delivered across design and engineering, holding 95% of tickets to schedule.', status: 'green' },
-    ],
-    metrics: [
-      { value: '95%', label: 'of tickets delivered to schedule', method: '[NEEDS INPUT: what counted as "to schedule," total ticket count, and the measurement period, per R2]' },
-    ],
-    artifacts: [
-      '[NEEDS INPUT: a redacted/reconstructed artifact — e.g. ticket brief template, board structure]',
-    ],
-  },
-  {
-    slug: 'boldtron-marketplace-app',
-    title: 'Boldtron — marketplace app, remote team, sole point of accountability',
-    org: 'Boldtron',
-    domain: 'consumer',
-    capabilities: ['delivery', 'stakeholder'],
-    priority: 'P1',
-    // Corrected against the CV: same Independent PM contract period as
-    // Lodgr, September 2025 - March 2026 — the real bounding dates, not a
-    // precise start/end for Boldtron specifically within that window.
+    slug: 'lodgr-booking-platform',
+    title: 'Lodgr — a booking platform from scoping to post-launch review',
+    org: 'Lodgr',
+    template: 'B',
+    domain: 'hospitality',
+    capabilities: ['build-from-zero', 'delivery', 'research'],
+    // The independent PM contract's bounding period. The CV doesn't split
+    // which weeks belonged to Lodgr versus Boldtron, so this is the honest
+    // bound rather than a precise range.
     dateStart: '2025-09',
     dateEnd: '2026-03',
-    situation: [
-      'Boldtron was a marketplace app I owned delivery for during my Independent Project Manager contract, directing design, development and QA through the release cycle for a fully remote team.',
-    ],
-    missing: [
-      // "no existing project management function" is stated directly by
-      // the CV for this contract's clients; Boldtron is a named engagement
-      // inside that same contract. "No single point of accountability" is
-      // a direct entailment of the CV's own phrasing — she became THE
-      // point of accountability, which is the role being filled, not
-      // inferred detail about who held it before.
-      'There was no existing project management function at Boldtron before this engagement, and no single point of accountability for the remote team\'s delivery.',
-    ],
-    built: [
-      'Directed design, development and QA through the release cycle, set roadmap and dependency decisions, and managed stakeholders as the point of accountability for the fully remote team.',
-      'Introduced the project plans, schedules, resource allocations, risk registers and change-request handling the engagement didn\'t have before.',
-    ],
-    // "Setting roadmap and dependency decisions" (built[0] above) is a
-    // process description — what the role involved — not a stated
-    // trade-off. Per instruction, that distinction holds even though it's
-    // tempting to read one into the other; this block stays open.
-    decisions: [
-      '[NEEDS INPUT: 2–3 real decision forks and what was traded off]',
-    ],
-    outcome: [
-      { text: '[NEEDS INPUT: outcome statement]', status: '[NEEDS INPUT: green/amber/red]' },
-    ],
-    metrics: [],
-    artifacts: [
-      '[NEEDS INPUT: a redacted/reconstructed artifact — e.g. sprint board structure, remote-team communication cadence]',
-    ],
-  },
-  {
-    // Replaces the removed "fintech-sponsorship-pipeline" case (Ayomide's
-    // instruction — removed entirely, not merged). Fintech now rests on
-    // this single case. Facts below are sourced directly from the CV; no
-    // discovery pass has been done, so the six blocks are open questions,
-    // not drafted narrative.
-    slug: 'lendsqr-product-operations',
-    title: 'Product operations — Lendsqr',
-    org: 'Lendsqr',
-    entityLine: 'Product Operations Officer, Lendsqr — August to September 2025.',
-    domain: 'fintech',
-    capabilities: ['research', 'stakeholder'],
-    priority: 'P1',
-    dateStart: '2025-08',
-    dateEnd: '2025-09',
-    situation: [
-      '[NEEDS INPUT: 2–3 sentences on what existed at Lendsqr when I joined as Product Operations Officer]',
-    ],
-    missing: [
-      '[NEEDS INPUT: the specific structural or process absence I stepped into]',
-    ],
-    built: [
-      'Managed customer enquiries and collaborated with the product team to resolve technical issues, working toward a seamless user experience.',
-      'Supported the development and continuous improvement of product documentation, knowledge bases and user resources.',
-      'Tracked and analysed product usage trends to identify process gaps and inform product improvement initiatives.',
-    ],
-    decisions: [
-      '[NEEDS INPUT: 2–3 real decision forks and what was traded off]',
-    ],
-    outcome: [
-      { text: '[NEEDS INPUT: outcome statement — what resulted from the usage-trend analysis or the technical-issue resolution work]', status: '[NEEDS INPUT: green/amber/red]' },
+    sections: [
+      {
+        heading: 'The product',
+        body: [
+          'Lodgr is an apartment and hotel booking platform. I led it end to end during my independent project management contract — from scoping, through release, to the post-launch review.',
+        ],
+      },
+      {
+        heading: 'Where I came in',
+        body: [
+          'At scoping, and into a client with no existing project management function. There were no project plans, no schedules, no resource allocation, no risk register and no change-request process — not because anyone had dismantled them, but because nobody had needed to build them yet.',
+          'Booking, availability and payment requirements existed as intentions rather than as anything an engineering team could pick up and start on.',
+        ],
+      },
+      {
+        heading: 'How delivery ran',
+        body: [
+          'I turned those requirements into user stories and sprint plans the engineering team could work from, and built the delivery infrastructure around them: project plans, schedules, resource allocations, a risk register and change-request handling, plus the reporting sequence that kept the team and the stakeholders looking at the same picture.',
+          'A booking platform is unforgiving about this. Availability and payment are the two places where a vague requirement turns into a customer-facing failure, so the specificity was the point rather than process for its own sake.',
+        ],
+      },
+      {
+        heading: 'What shipped',
+        body: [
+          'The platform reached release and then went through a post-launch review, rather than being declared finished at launch.',
+          'The delivery structure outlasted the release. It was what the engagement ran on afterwards, not scaffolding taken down once the product was live.',
+        ],
+      },
     ],
     metrics: [],
-    artifacts: [
-      '[NEEDS INPUT: a redacted/reconstructed artifact — e.g. a usage-trend report format, an issue-triage log]',
-    ],
   },
+
   {
-    // Split from the original merged "hostmeng-calnita-product-work" case per
-    // instruction: different employers, different domains. Domain and
-    // capabilities confirmed. The "research" tag here is market-trend and
-    // feedback analysis — a different flavour of research from Calnita's
-    // user research below; both are real, per instruction.
+    slug: 'boldtron-marketplace-app',
+    title: 'Boldtron — marketplace app delivery for a fully remote team',
+    org: 'Boldtron',
+    template: 'B',
+    domain: 'consumer',
+    capabilities: ['delivery', 'stakeholder'],
+    dateStart: '2025-09',
+    dateEnd: '2026-03',
+    contextLine: 'Fully remote team across design, development and QA.',
+    sections: [
+      {
+        heading: 'The product',
+        body: [
+          'Boldtron is a marketplace app. I owned delivery for it through the release cycle, working with a team that was fully remote across design, development and QA.',
+        ],
+      },
+      {
+        heading: 'Where I came in',
+        body: [
+          'As the point of accountability — the single person stakeholders could hold to a date.',
+          'This was one of the client relationships with no existing project management function, so the delivery infrastructure had to be built alongside the delivery itself rather than inherited from anyone.',
+        ],
+      },
+      {
+        heading: 'How delivery ran',
+        body: [
+          'I directed design, development and QA through the release cycle, and set the roadmap and dependency decisions — which of the three disciplines blocked which, and in what order things had to land.',
+          'Remote delivery makes dependencies expensive. Nobody overhears that something has slipped, so it is either visible in the plan or it is not visible at all. Project plans, schedules, resource allocations, a risk register and change-request handling all came in as part of that, along with the reporting sequence that kept the team and stakeholders aligned.',
+        ],
+      },
+      {
+        heading: 'What shipped',
+        body: [
+          'The release cycle completed with one accountable owner rather than responsibility spread thinly across three disciplines and several time zones.',
+        ],
+      },
+    ],
+    metrics: [],
+  },
+
+  {
     slug: 'hostmeng-clea-pushbio',
-    title: 'Clea and Pushbio Project Management',
+    title: 'Clea and Pushbio — product enhancement at HostMeNG',
     org: 'HostMeNG',
+    template: 'B',
     domain: 'devinfra',
     capabilities: ['delivery', 'research'],
-    priority: 'P1',
     dateStart: '2024-07',
-    dateEnd: '2025-01', // resolved from the CV: "Technical Project Manager, HostMeNG, July 2024 - January 2025"
-    situation: [
-      'The role spanned a cross-functional team across multiple countries, working with developers, designers, website managers and other stakeholders to deliver web hosting services.',
-      '[NEEDS INPUT: what specifically existed for Clea and Pushbio when I arrived — what was the product state before my enhancements?]',
-    ],
-    missing: [
-      '[NEEDS INPUT: the specific structural absence]',
-    ],
-    built: [
-      'Led product enhancements for Clea and Pushbio through iterative feedback integration and market-trend analysis, increasing user retention by 15%.',
-      'Collaborated with developers, designers, website managers and other stakeholders to optimise processes and deliver the web hosting service.',
-    ],
-    decisions: [
-      '[NEEDS INPUT: 2–3 real decision forks and what was traded off]',
-    ],
-    outcome: [
-      { text: 'User retention on Clea and Pushbio increased by 15% through this work.', status: 'green' },
+    dateEnd: '2025-01',
+    contextLine: 'Cross-functional team across multiple countries — developers, designers and website managers.',
+    sections: [
+      {
+        heading: 'The product',
+        body: [
+          'Clea and Pushbio are HostMeNG\'s flagship tools, sitting alongside its web hosting business. I was technical project manager for both between July 2024 and January 2025.',
+        ],
+      },
+      {
+        heading: 'Where I came in',
+        body: [
+          'Into existing products with existing users, and a cross-functional team spread across multiple countries — developers, designers, website managers and other stakeholders who needed to be working from one set of priorities rather than several.',
+        ],
+      },
+      {
+        heading: 'How delivery ran',
+        body: [
+          'Enhancements ran on two inputs. Iterative feedback integration, so what users were actually reporting shaped what got built next; and market trend analysis, so the roadmap was not purely reactive to the last complaint.',
+          'Alongside that I worked with the developers, designers and website managers to optimise the processes the hosting service itself ran on. At that size the delivery work and the operational work are the same work.',
+        ],
+      },
+      {
+        heading: 'What shipped',
+        body: [
+          'User retention on Clea and Pushbio rose by 15% across the period.',
+          'Retention is the honest measure for tools like these. It says people came back — not that they arrived once.',
+        ],
+      },
     ],
     metrics: [
-      { value: '+15%', label: 'retention on Clea and Pushbio', method: '[NEEDS INPUT: retention measured how — which user cohort, what tool or report, over what period? The CV names the driving method (iterative feedback integration and market-trend analysis, now in built[]) but not the measurement mechanics.]' },
-    ],
-    artifacts: [
-      '[NEEDS INPUT: a redacted/reconstructed artifact from this engagement]',
+      { value: '+15%', label: 'user retention on Clea and Pushbio' },
     ],
   },
+
   {
-    // Split from the original merged "hostmeng-calnita-product-work" case —
-    // see the note on the HostMeNG case above. Domain and capabilities
-    // confirmed. This resolves the WRD §4.1 vs. data mismatch on
-    // Consumer & marketplaces × Research & reporting — Calnita is real
-    // consumer-domain evidence for that cell.
     slug: 'calnita-beauty-mvps',
-    title: 'Calnita MVP',
+    title: 'Calnita — three MVPs for hyper-personalised beauty discovery',
     org: 'Calnita',
+    template: 'B',
     domain: 'consumer',
     capabilities: ['delivery', 'research'],
-    priority: 'P1',
-    dateStart: '2023-06', // resolved from the CV: "Project Manager, Calnita, June 2023 – March 2024"
+    dateStart: '2023-06',
     dateEnd: '2024-03',
-    situation: [
-      'The role directed collaboration across product development, marketing and engineering departments.',
-      '[NEEDS INPUT: what specifically existed for the beauty-discovery product when I arrived?]',
-    ],
-    missing: [
-      '[NEEDS INPUT: the specific structural absence]',
-    ],
-    built: [
-      'User research initiatives conducted with marketing and engineering teams, identifying unmet needs that shaped the product roadmap.',
-      'Data-backed prioritisation of MVP scope and sequencing, which drove the on-time delivery result below.',
-      '[NEEDS INPUT: what research method was used for the user research — surveys, interviews, usability testing — and what cadence?]',
-    ],
-    decisions: [
-      '[NEEDS INPUT: 2–3 real decision forks and what was traded off]',
-    ],
-    outcome: [
-      { text: '3 MVPs for hyper-personalised beauty discovery features launched, achieving key project milestones and 90% on-time delivery.', status: 'green' },
+    contextLine: 'Cross-functional teams across product development, marketing and engineering.',
+    sections: [
+      {
+        heading: 'The product',
+        body: [
+          'Calnita was building hyper-personalised beauty discovery — features that narrow an overwhelming category down to what one specific person would actually use. I ran delivery on three MVPs for it between June 2023 and March 2024.',
+        ],
+      },
+      {
+        heading: 'Where I came in',
+        body: [
+          'Across product development, marketing and engineering at once.',
+          'Three MVPs in ten months changes the question. It is never whether something can be built; it is which of these is worth building next, and what it costs to be wrong about that.',
+        ],
+      },
+      {
+        heading: 'How delivery ran',
+        body: [
+          'Prioritisation was data-backed rather than argued. What went into each MVP, and in what order, came from evidence rather than from whoever made the case most forcefully in the room.',
+          'I also pioneered the user research work with the marketing and engineering teams, which surfaced unmet needs that then shaped the roadmap. The research was not a parallel track producing a document nobody read — it was the input that decided what the next MVP contained.',
+        ],
+      },
+      {
+        heading: 'What shipped',
+        body: [
+          'Three MVPs launched, with 90% on-time delivery across them.',
+          'The roadmap they ran against had been redirected by what the research actually found, rather than by what was assumed about the category at the start.',
+        ],
+      },
     ],
     metrics: [
-      { value: '90%', label: 'of 3 beauty MVPs shipped on-time', method: '[NEEDS INPUT: "on-time" against what committed dates, and what counted as the 10% that was not? The CV names the driving method (data-backed prioritisation, now in built[]) but not the measurement mechanics.]' },
-    ],
-    artifacts: [
-      '[NEEDS INPUT: a redacted/reconstructed artifact from this engagement]',
+      { value: '3', label: 'MVPs launched' },
+      { value: '90%', label: 'on-time delivery across them' },
     ],
   },
+
   {
-    slug: 'frobits-ai-music-whatsapp',
-    title: 'Frobits — AI music generation in WhatsApp, and "Frobits Together" shipped end-to-end',
-    org: 'Frobits',
-    domain: 'consumer',
-    capabilities: ['ships-it-herself'],
-    priority: 'P1',
-    dateStart: '2026', // year confirmed per instruction; month/day still unconfirmed
-    dateEnd: '2026',
-    situation: [
-      '[NEEDS INPUT: 2–3 sentences on what existed before Frobits — this is my own product, so this should describe the problem I set out to solve]',
+    slug: 'langovest-website-redesign',
+    title: 'Langovest website redesign — fixing the briefs, not just the board',
+    org: 'Langovest',
+    template: 'B',
+    domain: 'devinfra',
+    capabilities: ['delivery', 'research'],
+    dateStart: '2026-03',
+    dateEnd: '2026-08',
+    sections: [
+      {
+        heading: 'The product',
+        body: [
+          'The Langovest website, rebuilt across design and engineering during my time there as project manager and coordinator.',
+        ],
+      },
+      {
+        heading: 'Where I came in',
+        body: [
+          'Upstream of the software team, which is where the actual problem was.',
+          'Briefs were reaching engineering without the detail needed to act on them. That is the expensive kind of problem, because it does not look like a delay — it looks like a team asking reasonable questions.',
+        ],
+      },
+      {
+        heading: 'How delivery ran',
+        body: [
+          'I ran the delivery lifecycle in Trello and restructured the project briefs going into it, so that what reached the software team was specific enough to start on without a round trip first.',
+          'That is most of what delivery management is on a redesign. The board is the visible artefact and the briefs are not, but the briefs are what decide whether the board moves.',
+        ],
+      },
+      {
+        heading: 'What shipped',
+        body: [
+          'The redesign was delivered across both design and engineering, with 95% of tickets held to schedule.',
+        ],
+      },
     ],
-    missing: [
-      '[NEEDS INPUT: the specific structural absence]',
+    metrics: [
+      { value: '95%', label: 'of tickets held to schedule' },
     ],
-    built: [
-      '[NEEDS INPUT: what I built end-to-end — WRD names writing the PRD, building the prototype, and deploying the backend as the differentiator here; confirm the specifics]',
+  },
+
+  {
+    slug: 'langovest-volunteer-network',
+    title: 'Langovest Volunteer Network — from zero to twelve across four countries',
+    org: 'Langovest',
+    template: 'C',
+    domain: 'infrastructure',
+    capabilities: ['build-from-zero', 'stakeholder'],
+    dateStart: '2026-03',
+    dateEnd: '2026-08',
+    sections: [
+      {
+        heading: 'What didn\'t exist',
+        body: [
+          'Langovest had no volunteer network. Not an underperforming one — none.',
+          'There was no way to receive an application, no answer to send back, no structure to place someone into once they had said yes, and no means of coordinating people who would never be in the same country as each other.',
+        ],
+      },
+      {
+        heading: 'What I built',
+        body: [
+          'Three systems, in the order they are actually needed.',
+          'Onboarding, so that someone arriving knows what they are joining and what is expected of them. Application-response, so an application gets an answer instead of silence — the fastest way to lose a volunteer is to leave them wondering whether anyone read it. And coordination, so that people spread across the UK, Canada, Nigeria and other African countries could operate as one network rather than several disconnected pockets.',
+        ],
+      },
+      {
+        heading: 'How it works now',
+        body: [
+          'Volunteers come in through a defined route rather than through whoever happened to know someone, and get a response on a predictable timescale.',
+          'They land in a structure whose coordination assumes distance and multiple time zones by default, instead of treating them as the exception to a co-located norm.',
+        ],
+      },
+      {
+        heading: 'Where it got to',
+        body: [
+          'Twelve active volunteers within four months of starting from nothing, across four countries and beyond.',
+        ],
+      },
     ],
-    decisions: [
-      '[NEEDS INPUT: 2–3 real decision forks and what was traded off]',
+    metrics: [
+      { value: '0 → 12', label: 'active volunteers in 4 months, across 4+ countries' },
     ],
-    outcome: [
-      { text: '[NEEDS INPUT: outcome statement]', status: '[NEEDS INPUT: green/amber/red]' },
+  },
+
+  {
+    slug: 'lendsqr-product-operations',
+    title: 'Product operations at Lendsqr',
+    org: 'Lendsqr',
+    entityLine: 'Product Operations Officer, Lendsqr — August to September 2025.',
+    template: 'D',
+    domain: 'fintech',
+    capabilities: ['research', 'stakeholder'],
+    dateStart: '2025-08',
+    dateEnd: '2025-09',
+    sections: [
+      {
+        heading: 'The role',
+        body: [
+          'Product Operations Officer at Lendsqr, a fintech, across August and September 2025.',
+          'Product ops sits between the people using a product and the people building it. The job is largely making sure what one group experiences reaches the other group in a form they can actually act on.',
+        ],
+      },
+      {
+        heading: 'The work',
+        body: [
+          'Customer enquiries came to me, and the technical ones went to the product team with enough context to be resolved rather than re-diagnosed from scratch. That collaboration was the day-to-day.',
+          'Underneath it, I worked on product documentation, knowledge bases and user resources — the part that reduces how many enquiries need a person at all. And I tracked and analysed product usage trends, looking for the process gaps that show up as patterns in behaviour rather than as complaints in a queue.',
+        ],
+      },
+      {
+        heading: 'What changed because of it',
+        body: [
+          'The usage analysis fed enhancement recommendations into product improvement work — gaps identified from what users actually did, not only from what support tickets happened to mention.',
+          'The documentation work is the half that compounds. Every question answered properly once is a question that stops arriving.',
+        ],
+      },
     ],
     metrics: [],
-    artifacts: [
-      '[NEEDS INPUT: a redacted/reconstructed artifact — e.g. PRD excerpt, product screenshot]',
-    ],
   },
+
   {
-    // New case, per instruction: the earliest role on the CV, previously
-    // only referenced in /about's "Before product" narrative and its own
-    // Experience section, not represented in the Coverage Matrix at all.
-    // health-research is a new domain — see DOMAINS above, deliberately
-    // placed last since this is a single, standalone case for it.
     slug: 'fmc-clinical-research',
     title: 'Clinical research coordination — Federal Medical Centre, Ogun State',
     org: 'Federal Medical Centre, Ogun State',
+    template: 'D',
     domain: 'health-research',
     capabilities: ['stakeholder', 'research'],
-    priority: 'P1',
     dateStart: '2022-09',
     dateEnd: '2023-06',
-    situation: [
-      'I was Project Manager for clinical research projects at the Federal Medical Centre, Ogun State, working with investigators and research teams on compliance and project execution.',
+    sections: [
+      {
+        heading: 'The role',
+        body: [
+          'Project manager for clinical research at the Federal Medical Centre in Ogun State, from September 2022 to June 2023.',
+          'This was the first project management role I held, and it came before I knew that was what it was called.',
+        ],
+      },
+      {
+        heading: 'The work',
+        body: [
+          'Research proposals moved through a fixed review path — from the submitting researcher, to the professor and second readers assigned to it, through to a decision to stamp or reject. Keeping that path moving was the job.',
+          'I assisted in recruiting investigators onto studies and collected the documentation that compliance and execution depend on, which in a clinical setting is not administrative overhead — it is what makes the research usable afterwards. I reviewed current literature on the relevant medical topics so that project strategy was informed by what the field knew now, rather than what it knew when a study was first designed.',
+          'And I tracked and coordinated data collection: accurate, timely gathering, and the follow-up visits that decide whether a data set is complete or merely large.',
+        ],
+      },
+      {
+        heading: 'What changed because of it',
+        body: [
+          'Studies moved through review and data collection with continuity. The follow-up work is what keeps a longitudinal data set from quietly developing holes in it.',
+          'It is also where everything after this came from. The committee chairman told me the work suited me and pushed me toward project management, which led to a Coursera course, and from there into delivery.',
+        ],
+      },
     ],
-    missing: [
-      '[NEEDS INPUT: the specific structural absence]',
-    ],
-    built: [
-      'Assisted in the recruitment of investigators and collected the documentation research projects needed for compliance and execution.',
-      'Conducted in-depth research and reviews of current literature on relevant medical topics, to keep project strategies and decisions informed by the latest developments.',
-      'Tracked and coordinated data collection processes — accurate, timely data gathering and follow-up visits — to keep research findings continuous and complete.',
-    ],
-    decisions: [
-      '[NEEDS INPUT: 2–3 real decision forks and what was traded off]',
-    ],
-    outcome: [
-      { text: '[NEEDS INPUT: outcome statement]', status: '[NEEDS INPUT: green/amber/red]' },
-    ],
-    // No headline number for this role in the CV — empty rather than an
-    // invented placeholder, per this file's own convention.
     metrics: [],
-    artifacts: [
-      '[NEEDS INPUT: a redacted/reconstructed artifact — e.g. a compliance documentation checklist, a literature review summary format]',
-    ],
+  },
+
+  {
+    // NOT LISTED. Frobits is Ayomide's own product and appears nowhere in
+    // the CV, so there is no traceable material to write it from — every
+    // block would be invention. PRD v2 §5: a case is either written or it
+    // is not listed. It is skipped entirely by the build (no page, no
+    // card, no link) until Ayomide supplies the content herself.
+    //
+    // To list it: set listed: true and add `sections` matching TEMPLATES.C
+    // headings — what didn't exist / what I built / how it works now /
+    // where it got to. The v1 WRD named writing the PRD, building the
+    // prototype and deploying the backend as the differentiators here;
+    // that needs confirming rather than assuming.
+    slug: 'frobits-ai-music-whatsapp',
+    title: 'Frobits — AI music generation in WhatsApp',
+    org: 'Frobits',
+    template: 'C',
+    domain: 'consumer',
+    capabilities: ['ships-it-herself'],
+    dateStart: '2026',
+    dateEnd: '2026',
+    listed: false,
+    sections: [],
+    metrics: [],
   },
 ];
+
+// The list everything user-facing should render from. See the note above
+// CASES: an unlisted case has no page, so a card or link pointing at one
+// is a 404 waiting to happen.
+export const LISTED_CASES = CASES.filter((c) => c.listed !== false);

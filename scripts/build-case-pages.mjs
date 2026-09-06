@@ -1,42 +1,40 @@
-// Generates static work/{slug}/index.html for every case in data/cases.js.
-// Run: node scripts/build-case-pages.mjs
+// Generates static work/{slug}/index.html for every LISTED case in
+// data/cases.js. Run: node scripts/build-case-pages.mjs
 //
-// Every case gets a page, P0 or P1 — a case with any remaining
-// [NEEDS INPUT: ...] renders with a loud, unmissable flag (see
-// css/case.css .needs-input) and a draft banner, so an unfinished page can
-// never be mistaken for finished copy. This applies identically regardless
-// of priority: a P0 case with open items used to be refused outright (no
-// page written for it at all), back when the retired Coverage Matrix
-// linked to every case — a matrix bar pointing at a 404 is worse than a
-// visibly unfinished page, since a 404 gives a visitor no information and
-// a draft banner gives them the truth. The guard still blocks a deploy:
-// the script exits non-zero and prints every P0 case with open items and
-// exactly what's missing, so an unfinished P0 case can't ship silently —
-// it just isn't a 404 while it's being worked on.
+// PRD v2 replaced v1's mandatory six-block schema with four adaptive
+// templates (see TEMPLATES in data/cases.js). What that changes here:
+//
+// - A case declares a template; its section headings must match that
+//   template exactly, in order. This script enforces that and refuses to
+//   build otherwise, which is what stops a case quietly drifting into a
+//   shape nothing else on the site expects.
+// - There is no partial state any more. v1 rendered [NEEDS INPUT]
+//   markers and a draft banner for unfinished cases; v2 says a case is
+//   either written or it is not listed, so `listed: false` cases are
+//   skipped entirely — no page, no card, no link — and nothing
+//   provisional is ever rendered publicly.
+// - RAG outcome badges are gone with the Outcome block that carried
+//   them. Colour now keys to engagement type, not status (PRD v2 §7).
+//
+// --allow-drafts still exists for the deploy pipeline: it reports
+// problems and exits 0 instead of failing the build. Local runs keep the
+// non-zero exit, which is the guard against shipping a broken case.
 
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { DOMAINS, CAPABILITIES, CASES } from '../data/cases.js';
-import { isNeedsInput, displayLabel, displayDateRange } from '../js/case-utils.js';
+import { DOMAINS, CAPABILITIES, CASES, TEMPLATES } from '../data/cases.js';
+import { displayLabel, displayDateRange } from '../js/case-utils.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-
-// Never derives meta description / JSON-LD from anything that could carry
-// [NEEDS INPUT] text or stale removed detail — always pulls fresh from the
-// case's own current situation[]/entityLine, so a confidentiality edit like
-// C1's automatically propagates to metadata too, rather than needing a
-// second place to remember to update.
-function metaDescriptionFor(caseObj) {
-  const realSituation = caseObj.situation.find((s) => typeof s === 'string' && !isNeedsInput(s));
-  if (realSituation) return realSituation;
-  if (caseObj.entityLine && !isNeedsInput(caseObj.entityLine)) return caseObj.entityLine;
-  return `${caseObj.title} — a case study from Ayomide Grace Amusan's portfolio.`;
-}
+const ALLOW_DRAFTS = process.argv.includes('--allow-drafts');
 
 const domainLabel = new Map(DOMAINS.map((d) => [d.slug, d.label]));
 const capabilityLabel = new Map(CAPABILITIES.map((c) => [c.slug, c.label]));
+
+const listedCases = CASES.filter((c) => c.listed !== false);
+const unlistedCases = CASES.filter((c) => c.listed === false);
 
 function escapeHtml(str) {
   return String(str)
@@ -46,85 +44,89 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-// Walks every string in a case object and collects every [NEEDS INPUT: ...]
-// found, with a field path, so the refusal message names exactly what's
-// missing rather than just "this case isn't done."
-function collectNeedsInput(value, path, out) {
-  if (typeof value === 'string') {
-    if (isNeedsInput(value)) out.push({ path, text: value });
-  } else if (Array.isArray(value)) {
-    value.forEach((item, i) => collectNeedsInput(item, `${path}[${i}]`, out));
-  } else if (value && typeof value === 'object') {
-    Object.entries(value).forEach(([key, v]) => collectNeedsInput(v, path ? `${path}.${key}` : key, out));
+// A listed case must match its template's headings exactly and have real
+// prose in every section. Anything else is a build error, not something
+// to paper over at render time.
+function validate(caseObj) {
+  const problems = [];
+  const template = TEMPLATES[caseObj.template];
+
+  if (!template) {
+    problems.push(`unknown template "${caseObj.template}" (expected one of ${Object.keys(TEMPLATES).join(', ')})`);
+    return problems;
   }
-  return out;
-}
 
-// Renders a string as plain escaped text, or — if it's an open question —
-// as a loud, unmissable flag. Never renders the raw brackets as if they
-// were normal copy.
-function renderText(value) {
-  if (isNeedsInput(value)) {
-    const question = value.replace(/^\[NEEDS INPUT:\s*/, '').replace(/\]$/, '');
-    return `<span class="needs-input">${escapeHtml(question)}</span>`;
+  const actual = (caseObj.sections || []).map((s) => s.heading);
+  const expected = template.headings;
+  if (actual.length !== expected.length || actual.some((h, i) => h !== expected[i])) {
+    problems.push(
+      `section headings don't match template ${caseObj.template} (${template.label}).\n` +
+      `      expected: ${expected.join(' · ')}\n` +
+      `      actual:   ${actual.length ? actual.join(' · ') : '(none)'}`
+    );
   }
-  return escapeHtml(value);
+
+  (caseObj.sections || []).forEach((section, i) => {
+    const paragraphs = (section.body || []).filter((p) => typeof p === 'string' && p.trim());
+    if (paragraphs.length === 0) {
+      problems.push(`section ${i + 1} ("${section.heading}") has no prose`);
+    }
+  });
+
+  return problems;
 }
 
-function renderParagraphs(entries) {
-  return entries.map((e) => `<p>${renderText(e)}</p>`).join('\n');
-}
-
-function renderList(entries) {
-  return `<ul class="plain-list">\n${entries.map((e) => `  <li>${renderText(e)}</li>`).join('\n')}\n</ul>`;
-}
-
-function renderOutcome(entries) {
-  return entries.map(({ text, status }) => {
-    const known = ['green', 'amber', 'red'].includes(status);
-    const badge = known
-      ? `<span class="rag-badge ${status}">${status}</span>`
-      : `<span class="rag-badge unknown">${renderText(status)}</span>`;
-    return `<div class="outcome-item">${badge}<p>${renderText(text)}</p></div>`;
-  }).join('\n');
-}
-
-function renderMetrics(entries) {
-  if (entries.length === 0) return '';
-  return entries.map(({ value, label, method }) => `
-    <div class="metric">
-      <span class="metric-value">${renderText(value)}</span>
-      <span class="metric-label">${renderText(label)}</span>
-      <span class="metric-method">${renderText(method)}</span>
-    </div>`).join('\n');
-}
-
-function renderArtifacts(entries) {
-  return `<ul class="artifact-list">\n${entries.map((e) => `  <li>${renderText(e)}</li>`).join('\n')}\n</ul>`;
+// Meta description and JSON-LD both pull from the case's own opening
+// sentence, so a content edit propagates to metadata automatically
+// rather than needing a second place to remember.
+function metaDescriptionFor(caseObj) {
+  const opening = caseObj.sections?.[0]?.body?.[0];
+  if (opening) return opening;
+  if (caseObj.entityLine) return caseObj.entityLine;
+  return `${caseObj.title} — a case study from Ayomide Grace Amusan's portfolio.`;
 }
 
 function findAdjacent(caseObj, direction) {
-  const idx = CASES.indexOf(caseObj);
-  for (let step = 1; step <= CASES.length; step++) {
-    const i = (idx + direction * step + CASES.length * 2) % CASES.length;
-    if (CASES[i].domain !== caseObj.domain) return CASES[i];
+  const idx = listedCases.indexOf(caseObj);
+  for (let step = 1; step <= listedCases.length; step++) {
+    const i = (idx + direction * step + listedCases.length * 2) % listedCases.length;
+    if (listedCases[i] !== caseObj) return listedCases[i];
   }
   return null;
 }
 
-function pageForCase(caseObj, hasOpenItems) {
+function renderSections(caseObj) {
+  return caseObj.sections
+    .map((section) => {
+      const paragraphs = section.body
+        .map((p) => `      <p>${escapeHtml(p)}</p>`)
+        .join('\n');
+      return `    <section class="case-block">
+      <h2>${escapeHtml(section.heading)}</h2>
+${paragraphs}
+    </section>`;
+    })
+    .join('\n\n');
+}
+
+function pageForCase(caseObj) {
   const domain = domainLabel.get(caseObj.domain) || caseObj.domain;
+  const template = TEMPLATES[caseObj.template];
   const capNames = caseObj.capabilities.map((s) => capabilityLabel.get(s) || s);
   const dateText = displayDateRange(caseObj);
   const byline = caseObj.entityLine
-    ? renderText(caseObj.entityLine)
-    : `${renderText(displayLabel(caseObj))}${dateText ? ' · ' + escapeHtml(dateText) : ''}`;
+    ? escapeHtml(caseObj.entityLine)
+    : `${escapeHtml(displayLabel(caseObj))}${dateText ? ' · ' + escapeHtml(dateText) : ''}`;
+
+  // Template A carries a date/scale line, B a stack/team-shape line.
+  // Either is omitted rather than invented where the CV doesn't say.
+  const contextLine = caseObj.scaleLine || caseObj.contextLine || null;
 
   const prev = findAdjacent(caseObj, -1);
   const next = findAdjacent(caseObj, 1);
 
   const metaDescription = metaDescriptionFor(caseObj);
-  const hasRealDates = !isNeedsInput(caseObj.dateStart) && !isNeedsInput(caseObj.dateEnd);
+  const hasRealDates = Boolean(caseObj.dateStart && caseObj.dateEnd);
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CreativeWork',
@@ -144,6 +146,11 @@ function pageForCase(caseObj, hasOpenItems) {
 <title>${escapeHtml(caseObj.title)} — Ayomide Grace Amusan</title>
 <meta name="description" content="${escapeHtml(metaDescription)}">
 <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
+<!-- Preloading these is load-bearing, not an optimisation. Without them
+     the metric-matched fallbacks paint first and the real faces swap in
+     afterwards, re-wrapping the display title and the mono nav — measured
+     as a deterministic ~0.12 CLS on every case page, while the pages that
+     did preload measured 0. -->
 <link rel="preload" as="font" type="font/woff2" href="../../fonts/archivo-black-expanded.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="../../fonts/jetbrains-mono-regular.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="../../fonts/jetbrains-mono-bold.woff2" crossorigin>
@@ -160,17 +167,14 @@ function pageForCase(caseObj, hasOpenItems) {
 ${JSON.stringify(jsonLd, null, 2)}
 </script>
 </head>
-<body>
+<body data-template="${caseObj.template}">
 
 <a class="skip-link" href="#main">Skip to content</a>
-
-${hasOpenItems ? '<div class="draft-banner">Draft — contains placeholder content, not for publication</div>' : ''}
 
 <header class="site-header">
   <a class="wordmark" href="../../">Ayomide Amusan</a>
   <nav aria-label="Primary">
     <a href="../../work/">Work</a>
-    <a href="../../method/">Method</a>
     <a href="../../about/">About</a>
     <a class="cv-link" href="../../assets/cv/ayomide-amusan-cv.pdf">Download CV</a>
   </nav>
@@ -178,50 +182,23 @@ ${hasOpenItems ? '<div class="draft-banner">Draft — contains placeholder conte
 
 <main id="main">
   <header class="case-header">
-    <p class="case-domain">${escapeHtml(domain)}</p>
+    <p class="case-type">${escapeHtml(template.label)}</p>
     <h1>${escapeHtml(caseObj.title)}</h1>
     <p class="entity-line">${byline}</p>
-    <ul class="card-tags">
-      ${capNames.map((c) => `<li>${escapeHtml(c)}</li>`).join('\n      ')}
-    </ul>
-  </header>
+${contextLine ? `    <p class="case-context">${escapeHtml(contextLine)}</p>\n` : ''}  </header>
 
   <div class="case-body">
-    <section class="case-block">
-      <h2>Situation</h2>
-      ${renderParagraphs(caseObj.situation)}
-    </section>
+${renderSections(caseObj)}
 
-    <section class="case-block">
-      <h2>What was missing</h2>
-      ${renderParagraphs(caseObj.missing)}
-    </section>
-
-    <section class="case-block">
-      <h2>What I built</h2>
-      ${renderList(caseObj.built)}
-    </section>
-
-    <section class="case-block">
-      <h2>Decisions and trade-offs</h2>
-      ${renderList(caseObj.decisions)}
-    </section>
-
-    ${caseObj.outcome.length > 0 || caseObj.metrics.length > 0 ? `<section class="case-block">
-      <h2>Outcome</h2>
-      ${renderOutcome(caseObj.outcome)}
-      ${renderMetrics(caseObj.metrics)}
-    </section>` : ''}
-
-    ${caseObj.artifacts.length > 0 ? `<section class="case-block">
-      <h2>Artifacts</h2>
-      ${renderArtifacts(caseObj.artifacts)}
-    </section>` : ''}
+    <p class="case-meta-tags">
+      <span class="case-meta-label">${escapeHtml(domain)}</span>
+      ${capNames.map((c) => `<span class="case-meta-tag">${escapeHtml(c)}</span>`).join('\n      ')}
+    </p>
   </div>
 
   <nav class="case-nav" aria-label="Other cases">
-    ${prev ? `<a class="prev-case" href="../${prev.slug}/"><span class="nav-label">Previous — ${escapeHtml(domainLabel.get(prev.domain))}</span><span class="nav-title">${escapeHtml(prev.title)}</span></a>` : '<span></span>'}
-    ${next ? `<a class="next-case" href="../${next.slug}/"><span class="nav-label">Next — ${escapeHtml(domainLabel.get(next.domain))}</span><span class="nav-title">${escapeHtml(next.title)}</span></a>` : ''}
+    ${prev ? `<a class="prev-case" href="../${prev.slug}/"><span class="nav-label">Previous</span><span class="nav-title">${escapeHtml(prev.title)}</span></a>` : '<span></span>'}
+    ${next ? `<a class="next-case" href="../${next.slug}/"><span class="nav-label">Next</span><span class="nav-title">${escapeHtml(next.title)}</span></a>` : ''}
   </nav>
 </main>
 
@@ -236,81 +213,81 @@ ${hasOpenItems ? '<div class="draft-banner">Draft — contains placeholder conte
 `;
 }
 
-// Per-capability domain coverage, with single-case dependencies flagged.
-// Runs on every build, not on request — a domain's only case for a given
-// capability can lose that tag in an ordinary content edit (it happened to
-// Civic x Build-from-zero the same week this check was written), quietly
-// weakening the breadth-of-evidence argument the whole site is making.
-// Printing this every time means that's visible immediately, not only when
-// someone thinks to ask — this outlived the Coverage Matrix that motivated
-// it because the underlying coverage question is still real without it.
+// Per-capability domain coverage across LISTED cases only — an unlisted
+// case proves nothing about breadth. Runs on every build so a coverage
+// gap shows up immediately rather than when someone thinks to ask.
 function printCoverageReport() {
-  console.log('\nCapability coverage by domain (single-case dependencies flagged):');
+  console.log('\nCapability coverage by domain, listed cases only (single-case dependencies flagged):');
   CAPABILITIES.forEach((cap) => {
-    const casesWithCap = CASES.filter((c) => c.capabilities.includes(cap.slug));
+    const withCap = listedCases.filter((c) => c.capabilities.includes(cap.slug));
+    if (withCap.length === 0) {
+      console.log(`\n  ${cap.label} — no listed cases`);
+      return;
+    }
     const byDomain = new Map();
-    casesWithCap.forEach((c) => {
+    withCap.forEach((c) => {
       if (!byDomain.has(c.domain)) byDomain.set(c.domain, []);
       byDomain.get(c.domain).push(c.slug);
     });
     console.log(`\n  ${cap.label} — ${byDomain.size} domain(s):`);
     for (const [domainSlug, slugs] of byDomain) {
-      const domainLabel = DOMAINS.find((d) => d.slug === domainSlug)?.label || domainSlug;
-      const flag = slugs.length === 1 ? '  <-- single case' : '';
-      console.log(`    ${domainLabel}: ${slugs.join(', ')}${flag}`);
+      const label = DOMAINS.find((d) => d.slug === domainSlug)?.label || domainSlug;
+      console.log(`    ${label}: ${slugs.join(', ')}${slugs.length === 1 ? '  <-- single case' : ''}`);
     }
   });
   console.log('');
 }
 
-// --allow-drafts: for the Railway build step only (see Dockerfile). Pages
-// generate exactly the same either way — every case always got a page
-// since the earlier "refuse P0 outright" behaviour was retired (see the
-// header comment above) — the flag only changes whether an incomplete P0
-// case fails the build. Without it (the default, and the only mode a
-// human runs locally), incomplete P0 content failing the build is the
-// guard against shipping placeholder content by accident. A deploy
-// pipeline can't act on that prompt, so it needs a way to say "generate
-// what exists and ship it as drafts" explicitly, never as the default.
-const ALLOW_DRAFTS = process.argv.includes('--allow-drafts');
+function printTemplateReport() {
+  console.log('Engagement types (PRD v2 §5):');
+  Object.entries(TEMPLATES).forEach(([key, template]) => {
+    const inTemplate = listedCases.filter((c) => c.template === key);
+    console.log(`  ${key} — ${template.label}: ${inTemplate.length ? inTemplate.map((c) => c.slug).join(', ') : '(none listed)'}`);
+  });
+  console.log('');
+}
 
 function run() {
+  printTemplateReport();
   printCoverageReport();
 
   const generated = [];
-  const incompleteP0 = [];
+  const invalid = [];
 
-  CASES.forEach((caseObj) => {
-    const openItems = collectNeedsInput(caseObj, '', []);
-    const hasOpenItems = openItems.length > 0;
-
-    if (caseObj.priority === 'P0' && hasOpenItems) {
-      incompleteP0.push({ slug: caseObj.slug, openItems });
+  listedCases.forEach((caseObj) => {
+    const problems = validate(caseObj);
+    if (problems.length > 0) {
+      invalid.push({ slug: caseObj.slug, problems });
+      return;
     }
-
     const dir = join(ROOT, 'work', caseObj.slug);
     mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, 'index.html'), pageForCase(caseObj, hasOpenItems));
-    generated.push({ slug: caseObj.slug, priority: caseObj.priority, draft: hasOpenItems });
+    writeFileSync(join(dir, 'index.html'), pageForCase(caseObj));
+    generated.push(caseObj);
   });
 
-  console.log(`\nGenerated ${generated.length} of ${CASES.length} case pages:`);
-  generated.forEach((g) => console.log(`  ${g.draft ? '(draft)' : '(complete)'} work/${g.slug}/ — ${g.priority}`));
+  console.log(`Generated ${generated.length} case page(s):`);
+  generated.forEach((c) => console.log(`  work/${c.slug}/ — template ${c.template}`));
 
-  if (incompleteP0.length > 0) {
-    console.log(`\n${ALLOW_DRAFTS ? 'NOTICE' : 'BLOCKING'} — ${incompleteP0.length} P0 case(s) generated as drafts, not deploy-ready (still contain [NEEDS INPUT]):`);
-    incompleteP0.forEach(({ slug, openItems }) => {
-      console.log(`\n  ${slug} — ${openItems.length} open item(s):`);
-      openItems.forEach(({ path, text }) => console.log(`    - ${path}: ${text}`));
+  if (unlistedCases.length > 0) {
+    console.log(`\nNot listed (${unlistedCases.length}) — no page, no card, no link, by design:`);
+    unlistedCases.forEach((c) => console.log(`  ${c.slug} — needs written content before it can be listed`));
+  }
+
+  if (invalid.length > 0) {
+    console.log(`\n${ALLOW_DRAFTS ? 'PROBLEM' : 'BLOCKING'} — ${invalid.length} listed case(s) failed validation and were NOT written:`);
+    invalid.forEach(({ slug, problems }) => {
+      console.log(`\n  ${slug}:`);
+      problems.forEach((p) => console.log(`    - ${p}`));
     });
     if (ALLOW_DRAFTS) {
-      console.log(`\n--allow-drafts passed: ${incompleteP0.length} P0 case(s) shipped as drafts, deploy gate not enforced this run. Resolve the items above when the real content exists.\n`);
+      console.log('\n--allow-drafts passed: exiting 0 so a deploy is not blocked, but these pages do not exist.\n');
     } else {
-      console.log('\nPages were written with a draft banner so no case links to a 404, but this build does not clear the deploy gate. Resolve the items above.\n');
+      console.log('\nFix the above, or set listed: false to take the case out of the site entirely.\n');
       process.exitCode = 1;
     }
   } else {
-    console.log('\nNo incomplete P0 cases.\n');
+    console.log('\nAll listed cases valid.\n');
   }
 }
 
